@@ -6,6 +6,8 @@ struct ChatInputBar: View {
     let isLoading: Bool
     let onSend: () -> Void
     
+    @State private var showVoiceChat = false
+    
     // Get keyboard width accounting for safe area
     private var keyboardWidth: CGFloat {
         UIScreen.main.bounds.width
@@ -48,7 +50,9 @@ struct ChatInputBar: View {
                                 .foregroundColor(.white)
                         }
                         
-                        Button(action: {}) {
+                        Button {
+                            showVoiceChat = true
+                        } label: {
                             Image(systemName: "waveform")
                                 .font(.system(size: 20))
                                 .foregroundColor(.white)
@@ -72,5 +76,8 @@ struct ChatInputBar: View {
         .background(Color.black)
         .ignoresSafeArea(.keyboard)
         .offset(y: -8)
+        .fullScreenCover(isPresented: $showVoiceChat) {
+            VoiceVisualizationView()
+        }
     }
 }

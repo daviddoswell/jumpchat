@@ -1,7 +1,7 @@
 import Foundation
 
 enum Config {
-    static let openAIKey = "" // Add your OpenAI API key here
-    static let elevenLabsApiKey = "" // Add your ElevenLabs API key here
-    static let elevenLabsAgentId = "" // Add your ElevenLabs agent ID here
+    static let openAIKey = ""
+    static let elevenLabsApiKey = "sk_99f6bccee3e41920b145972d70a073638c3926068ca09adf"
+    static let elevenLabsAgentId = "qXo28jT0r9zxUIq33Bjo"
 }

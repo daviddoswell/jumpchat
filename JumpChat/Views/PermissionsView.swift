@@ -5,7 +5,8 @@ import Photos
 struct PermissionsView: View {
     @StateObject private var permissionsManager = PermissionsManager()
     @Binding var showPermissions: Bool
-    
+    @AppStorage("hasCompletedPermissions") private var hasCompletedPermissions = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
@@ -69,6 +70,7 @@ struct PermissionsView: View {
                 .padding(.horizontal)
                 
                 Button {
+                    hasCompletedPermissions = true
                     showPermissions = false
                 } label: {
                     Text("Continue")
