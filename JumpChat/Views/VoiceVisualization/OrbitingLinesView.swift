@@ -7,7 +7,7 @@ struct OrbitingLinesView: View {
     @State private var transitionProgress: Double = 0
     
     private let lineCount = 4
-    private let radius: Double = 90  // Doubled from 45
+    private let radius: Double = 40
     private let baseSpeed: Double = 0.5  // Increased base speed
     
     var body: some View {
@@ -16,51 +16,73 @@ struct OrbitingLinesView: View {
                 let time = timelineContext.date.timeIntervalSince1970
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
                 
-                // Draw each line
                 for i in 0..<lineCount {
-                    let phase = Double(i) * .pi / 2
-                    // Increase speed for listening state
-                    let speed = state == .listening ?
-                        baseSpeed * (1.5 + Double(audioAmplitude)) : baseSpeed
+                    let phase = Double(i) * .pi * 2 / Double(lineCount)
+                    let speedMultiplier = state == .listening ?
+                        (1.0 + Double(audioAmplitude) * 0.2) : 1.0
+                    let speed = baseSpeed * speedMultiplier
                     
-                    let path = Path { path in
-                        for t in stride(from: 0.0, to: 2 * .pi, by: 0.08) {
-                            var point3D = orbitPoint(time: time * speed, phase: phase, angle: t)
-                            
-                            // During transition, gradually flatten the z coordinate
-                            if transitionProgress > 0 {
-                                point3D.z *= (1 - transitionProgress)
-                            }
-                            
-                            let point2D = project3DTo2D(point3D: point3D, center: center)
-                            if t == 0 {
-                                path.move(to: point2D)
-                            } else {
-                                path.addLine(to: point2D)
+                    // Create multiple paths with different opacities for fade effect
+                    for fadeStep in 0..<8 {
+                        let fadeOffset = Double(fadeStep) * 0.15 // Spread out the fade steps
+                        let path = Path { path in
+                            // Increased detail for smoother curves
+                            for t in stride(from: 0.0, to: 2 * .pi, by: 0.05) {
+                                var point3D = orbitPoint(time: time * speed, phase: phase + fadeOffset, angle: t)
+                                
+                                if transitionProgress > 0 {
+                                    point3D.y *= (1 - transitionProgress)
+                                    point3D.z *= pow(1 - transitionProgress, 2)
+                                }
+                                
+                                let point2D = project3DTo2D(point3D: point3D, center: center)
+                                if t == 0 {
+                                    path.move(to: point2D)
+                                } else {
+                                    path.addLine(to: point2D)
+                                }
                             }
                         }
+                        // Fade each subsequent path
+                        drawGlowingLine(context: context, path: path, opacity: 1.0 - (Double(fadeStep) * 0.15))
                     }
-                    drawGlowingLine(context: context, path: path)
                 }
             }
         }
         .onChange(of: state) { oldValue, newValue in
-            withAnimation(.easeInOut(duration: 0.5)) {
+            withAnimation(.easeInOut(duration: 0.7)) {
                 transitionProgress = newValue == .responding ? 1 : 0
             }
         }
+        .frame(width: 200, height: 200)
+        .ignoresSafeArea()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
     
     private func orbitPoint(time: Double, phase: Double, angle: Double) -> Vector3D {
-        let primaryWave = Darwin.sin(angle * 2 + time) * 0.15
-        let secondaryWave = Darwin.sin(angle * 1.5 + time * 1.2) * 0.08
-        let orbitRadius = radius * (1 + primaryWave + secondaryWave)
+        // Multiple wave frequencies for more organic movement
+        let primaryWave = Darwin.sin(angle * 2 + time) * 0.12
+        let secondaryWave = Darwin.sin(angle * 1.5 + time * 1.3) * 0.08
+        let tertiaryWave = Darwin.sin(angle * 3 + time * 0.7) * 0.05  // Added third wave
+        let quaternaryWave = Darwin.cos(angle + time * 1.8) * 0.06    // Added fourth wave
         
-        let x = orbitRadius * cos(angle) * cos(phase + time * 0.4)
-        let y = orbitRadius * sin(angle) * 1.1
-        let z = orbitRadius * cos(angle) * sin(phase + time * 0.4)
+        // Combine waves with time-based variation
+        let radiusVariation = primaryWave + secondaryWave + tertiaryWave + quaternaryWave
+        let orbitRadius = radius * (1 + radiusVariation)
         
-        let rotationAngle = time * (baseSpeed * 0.8)
+        // Add flowing motion in all dimensions
+        let xFlow = Darwin.sin(time * 0.5) * 0.3
+        let yFlow = Darwin.cos(time * 0.4) * 0.2
+        let zFlow = Darwin.sin(time * 0.6) * 0.3
+        
+        let x = orbitRadius * cos(angle + xFlow) * cos(phase + time * 0.4)
+        let y = orbitRadius * sin(angle + yFlow)
+        let z = orbitRadius * cos(angle + zFlow) * sin(phase + time * 0.4)
+        
+        // Add subtle spiraling motion
+        let spiral = Darwin.sin(time * 0.3) * 0.2
+        let rotationAngle = time * (baseSpeed * 0.6) + spiral
+        
         let rotatedX = x * cos(rotationAngle) - z * sin(rotationAngle)
         let rotatedZ = x * sin(rotationAngle) + z * cos(rotationAngle)
         
@@ -68,48 +90,57 @@ struct OrbitingLinesView: View {
     }
     
     private func project3DTo2D(point3D: Vector3D, center: CGPoint) -> CGPoint {
-        let distance: Double = 120
-        let scale = distance / (distance - point3D.z * 0.7)
+        let distance: Double = 150
+        let scale = distance / (distance - point3D.z * 0.6)
         let x = center.x + point3D.x * scale
         let y = center.y + point3D.y * scale
         return CGPoint(x: x, y: y)
     }
     
-    private func drawGlowingLine(context: GraphicsContext, path: Path) {
-        // Super soft outer glow
-        var outerContext = context
-        outerContext.addFilter(.blur(radius: 12))
-        outerContext.stroke(
+    private func drawGlowingLine(context: GraphicsContext, path: Path, opacity: Double) {
+        // Super soft outer glow with very low opacity
+        var extremeOuterContext = context
+        extremeOuterContext.addFilter(.blur(radius: 25))
+        extremeOuterContext.stroke(
             path,
-            with: .color(.white.opacity(0.06)),
-            lineWidth: 18
+            with: .color(.white.opacity(0.01 * opacity)),
+            lineWidth: 35
         )
         
-        // Soft middle glow
+        // Soft outer glow
+        var outerContext = context
+        outerContext.addFilter(.blur(radius: 20))
+        outerContext.stroke(
+            path,
+            with: .color(.white.opacity(0.02 * opacity)),
+            lineWidth: 28
+        )
+        
+        // Middle glow
         var middleContext = context
-        middleContext.addFilter(.blur(radius: 8))
+        middleContext.addFilter(.blur(radius: 15))
         middleContext.stroke(
             path,
-            with: .color(.white.opacity(0.1)),
-            lineWidth: 12
+            with: .color(.white.opacity(0.04 * opacity)),
+            lineWidth: 20
         )
         
         // Inner glow
         var innerContext = context
-        innerContext.addFilter(.blur(radius: 4))
+        innerContext.addFilter(.blur(radius: 10))
         innerContext.stroke(
             path,
-            with: .color(.white.opacity(0.2)),
-            lineWidth: 8
+            with: .color(.white.opacity(0.06 * opacity)),
+            lineWidth: 12
         )
         
-        // Core glow
+        // Very subtle core
         var coreContext = context
-        coreContext.addFilter(.blur(radius: 2))
+        coreContext.addFilter(.blur(radius: 3))
         coreContext.stroke(
             path,
-            with: .color(.white.opacity(0.4)),
-            lineWidth: 3
+            with: .color(.white.opacity(0.08 * opacity)),
+            lineWidth: 2
         )
     }
 }
@@ -118,6 +149,8 @@ struct OrbitingLinesView: View {
     ZStack {
         Color.black.ignoresSafeArea()
         OrbitingLinesView(state: .listening, audioAmplitude: 0.5)
-            .frame(width: 300, height: 300)
+            .frame(width: 200, height: 200)
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }
