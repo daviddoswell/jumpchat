@@ -13,77 +13,107 @@ struct AudioEqualizerView: View {
                 for fadeStep in 0..<8 {
                     let fadeOffset = Double(fadeStep) * 0.15
                     let path = Path { path in
-                        // Start at left edge
+                        // Start at left edge at center line
                         path.move(to: CGPoint(x: 0, y: center.y))
                         
-                        // Simplified curve calculation for straighter line
-                        let baseAmplitude = Double(audioAmplitude) * size.height * 0.2
-                        let timeVariation = sin(time * 3) * 0.1 // Subtle movement
-                        let amplitude = baseAmplitude * (1 + timeVariation)
+                        // Calculate dynamic wave points
+                        let pointCount = 32
+                        let baseAmplitude = Double(audioAmplitude) * size.height * 0.3
                         
-                        // Use quadratic curve for smoother, straighter look
-                        let midPointY = center.y - amplitude
-                        let controlPoint = CGPoint(x: size.width/2, y: midPointY)
+                        var wavePoints: [CGPoint] = []
+                        for i in 0...pointCount {
+                            let x = size.width * Double(i) / Double(pointCount)
+                            let progress = Double(i) / Double(pointCount)
+                            
+                            // Create wave oscillation that peaks in the middle
+                            let intensity = sin(progress * .pi)
+                            let oscillation = sin(time * 12 + progress * 8)
+                            
+                            // Calculate y position: oscillates around center line
+                            let y = center.y + (baseAmplitude * intensity * oscillation)
+                            wavePoints.append(CGPoint(x: x, y: y))
+                        }
                         
-                        path.addQuadCurve(
-                            to: CGPoint(x: size.width, y: center.y),
-                            control: controlPoint
-                        )
+                        // Draw smooth curve through points
+                        for (index, point) in wavePoints.enumerated() {
+                            if index == 0 {
+                                path.move(to: point)
+                            } else {
+                                path.addLine(to: point)
+                            }
+                        }
                     }
                     
-                    // Draw with increased base opacity
-                    drawGlowingLine(context: context, path: path, opacity: (1.0 - (Double(fadeStep) * 0.12)))
+                    // Calculate fade based on step
+                    let baseOpacity = 1.0 - (Double(fadeStep) * 0.15)
+                    let finalOpacity = baseOpacity * baseOpacity
+                    
+                    // Draw with enhanced glow effect
+                    drawGlowingLine(
+                        context: context,
+                        path: path,
+                        opacity: finalOpacity,
+                        fadeOffset: fadeOffset
+                    )
                 }
             }
         }
-        .frame(height: 100) // Constrain height for better control
+        .frame(height: 100)
     }
     
-    private func drawGlowingLine(context: GraphicsContext, path: Path, opacity: Double) {
-        // Super soft outer glow
+    private func drawGlowingLine(context: GraphicsContext, path: Path, opacity: Double, fadeOffset: Double) {
+        // Enhanced glow effect with fade offset influencing the blur radius
+        
+        // Super soft outer glow with very low opacity
         var extremeOuterContext = context
-        extremeOuterContext.addFilter(.blur(radius: 25))
+        extremeOuterContext.addFilter(.blur(radius: 25 + fadeOffset))
         extremeOuterContext.stroke(
             path,
-            with: .color(.white.opacity(0.02 * opacity)),
+            with: .color(.white.opacity(0.01 * opacity)),
             lineWidth: 35
         )
         
         // Soft outer glow
         var outerContext = context
-        outerContext.addFilter(.blur(radius: 20))
+        outerContext.addFilter(.blur(radius: 20 + (fadeOffset * 0.8)))
         outerContext.stroke(
             path,
-            with: .color(.white.opacity(0.04 * opacity)),
+            with: .color(.white.opacity(0.02 * opacity)),
             lineWidth: 28
         )
         
         // Middle glow
         var middleContext = context
-        middleContext.addFilter(.blur(radius: 15))
+        middleContext.addFilter(.blur(radius: 15 + (fadeOffset * 0.6)))
         middleContext.stroke(
             path,
-            with: .color(.white.opacity(0.08 * opacity)),
+            with: .color(.white.opacity(0.04 * opacity)),
             lineWidth: 20
         )
         
         // Inner glow
         var innerContext = context
-        innerContext.addFilter(.blur(radius: 10))
+        innerContext.addFilter(.blur(radius: 10 + (fadeOffset * 0.4)))
         innerContext.stroke(
             path,
-            with: .color(.white.opacity(0.12 * opacity)),
+            with: .color(.white.opacity(0.06 * opacity)),
             lineWidth: 12
         )
         
-        // Brighter core
+        // Very subtle core
         var coreContext = context
-        coreContext.addFilter(.blur(radius: 3))
+        coreContext.addFilter(.blur(radius: 3 + (fadeOffset * 0.2)))
         coreContext.stroke(
             path,
-            with: .color(.white.opacity(0.15 * opacity)),
+            with: .color(.white.opacity(0.08 * opacity)),
             lineWidth: 2
         )
+    }
+}
+
+extension CGPoint {
+    func midPoint(to point: CGPoint) -> CGPoint {
+        return CGPoint(x: (self.x + point.x) / 2, y: (self.y + point.y) / 2)
     }
 }
 

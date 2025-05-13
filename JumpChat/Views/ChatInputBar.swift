@@ -12,29 +12,37 @@ struct ChatInputBar: View {
     var body: some View {
         VStack(spacing: 0) {
             // Single unified input container
-            VStack(spacing: 12) {
-                // Text input field on its own line
+            VStack(spacing: 16) {
+                // Text input field with placeholder
                 ZStack(alignment: .leading) {
                     if text.isEmpty {
-                        Text("Ask anything")
-                            .foregroundColor(.gray)
+                        HStack {
+                            Spacer()
+                            Text("Ask anything")
+                                .foregroundColor(.gray.opacity(0.8))
+                            Spacer()
+                        }
                     }
-                    TextField("", text: $text)
+                    TextField("", text: $text, axis: .vertical)
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.leading)
+                        .textFieldStyle(.plain)
+                        .frame(minHeight: 20)
                 }
+                .padding(.top, 4)
                 
-                // Controls below
-                HStack(spacing: 16) {
+                // Bottom controls
+                HStack(spacing: 20) {
                     Button(action: {}) {
                         Image(systemName: "plus")
                             .font(.system(size: 20))
-                            .foregroundColor(.white)
+                            .foregroundColor(.white.opacity(0.8))
                     }
                     
                     Button(action: {}) {
                         Image(systemName: "slider.horizontal.3")
                             .font(.system(size: 20))
-                            .foregroundColor(.white)
+                            .foregroundColor(.white.opacity(0.8))
                     }
                     
                     Spacer()
@@ -43,7 +51,7 @@ struct ChatInputBar: View {
                         Button(action: {}) {
                             Image(systemName: "mic")
                                 .font(.system(size: 20))
-                                .foregroundColor(.white)
+                                .foregroundColor(.white.opacity(0.8))
                         }
                         
                         Button {
@@ -55,34 +63,28 @@ struct ChatInputBar: View {
                         } label: {
                             Image(systemName: "waveform")
                                 .font(.system(size: 20))
-                                .foregroundColor(.white)
+                                .foregroundColor(.white.opacity(0.8))
                         }
                     } else {
                         Button(action: onSend) {
                             Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 28))
+                                .font(.system(size: 24))
                                 .foregroundColor(.white)
                         }
                         .disabled(isLoading)
                     }
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .frame(width: keyboardWidth)
-            .background(Color(.systemGray6))
-            .cornerRadius(20)
+            .background(Color(white: 0.17)) // Darker gray like ChatGPT
+            .cornerRadius(12)
+            .padding(.horizontal, 8)
         }
         .background(Color.black)
         .ignoresSafeArea(.keyboard)
-        .offset(y: -8)
         .fullScreenCover(isPresented: $showVoiceChat) {
             VoiceVisualizationView()
         }
-    }
-    
-    // Get keyboard width accounting for safe area
-    private var keyboardWidth: CGFloat {
-        UIScreen.main.bounds.width
     }
 }

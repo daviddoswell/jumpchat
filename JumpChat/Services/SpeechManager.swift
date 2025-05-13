@@ -22,9 +22,9 @@ final class SpeechManager: ObservableObject {
     
     // MARK: - Public Methods
     func startVoiceChat() async throws {
-        state = .listening  // Start in listening state
+        state = .listening
+        audioAmplitude = 0.0
         provideFeedback(intensity: 0.3)
-        audioAmplitude = 0.0  // Reset amplitude to 0
         
         let config = ElevenLabsSDK.SessionConfig(agentId: Config.elevenLabsAgentId)
         let callbacks = createCallbacks()
@@ -45,8 +45,7 @@ final class SpeechManager: ObservableObject {
         isMuted.toggle()
         provideFeedback(intensity: 0.2)
         
-        // TODO: Implement actual muting in ElevenLabsSDK
-        // For now, just affect the visualization
+        // Reset amplitude when muted
         if isMuted {
             audioAmplitude = 0.0
         }
@@ -60,7 +59,7 @@ final class SpeechManager: ObservableObject {
             audioLevelTimer?.invalidate()
             audioAmplitude = 0.0
             state = .idle
-            isMuted = false  // Reset mute state
+            isMuted = false
             provideFeedback(intensity: 0.6)
         }
     }
@@ -92,7 +91,7 @@ final class SpeechManager: ObservableObject {
                 switch mode {
                 case .listening:
                     self.state = .listening
-                    // Only reset amplitude if not muted
+                    // Reset amplitude when switching to listening
                     if !self.isMuted {
                         self.audioAmplitude = 0.0
                     }
@@ -124,18 +123,14 @@ final class SpeechManager: ObservableObject {
         audioLevelTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                // Don't update amplitude if muted
-                guard !self.isMuted else { return }
-                
-                if self.state == .responding {
-                    // AI is speaking - use smooth animation
+                // When AI is speaking, we want active movement
+                if !self.isMuted && self.state == .responding {
                     let targetAmplitude: Float = 0.7
                     let currentAmplitude = self.audioAmplitude
                     let newAmplitude = currentAmplitude + (targetAmplitude - currentAmplitude) * 0.2
                     self.audioAmplitude = newAmplitude + Float.random(in: -0.1...0.1)
                 } else {
-                    // TODO: Get real voice input levels from ElevenLabs
-                    // For now, keep at 0 unless we detect voice
+                    // Immediately go to zero when not speaking
                     self.audioAmplitude = 0.0
                 }
             }

@@ -7,7 +7,7 @@ struct OrbitingLinesView: View {
     @State private var transitionProgress: Double = 0
     
     private let lineCount = 4
-    private let radius: Double = 40
+    private let radius: Double = 50  // Increased for 250x250 frame
     private let baseSpeed: Double = 0.5
     
     var body: some View {

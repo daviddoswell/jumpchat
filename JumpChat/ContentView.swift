@@ -44,7 +44,7 @@ struct ContentView: View {
                             }
                         }
                         .padding(.vertical, 8)
-                        .padding(.bottom, 160)
+                        .padding(.bottom, 180)
                     }
                     .onChange(of: chatManager.currentConversation.messages.count) { oldValue, newValue in
                         withAnimation {
@@ -60,7 +60,7 @@ struct ContentView: View {
                     }
                 }
                 
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             SuggestionButton(
@@ -79,9 +79,9 @@ struct ContentView: View {
                                 action: { messageText = "Help me study for my exam" }
                             )
                         }
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 12)
                     }
-                    .frame(height: 60)
+                    .frame(height: 70)
                     
                     ChatInputBar(
                         text: $messageText,
@@ -95,7 +95,11 @@ struct ContentView: View {
                         }
                     )
                 }
-                .background(Color.black)
+                .background(
+                    Rectangle()
+                        .fill(Color.black)
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: -4)
+                )
             }
             .navigationTitle("Jump Chat")
             .navigationBarTitleDisplayMode(.inline)

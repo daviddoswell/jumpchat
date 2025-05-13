@@ -40,7 +40,7 @@ struct VoiceVisualizationView: View {
                             state: speechManager.state,
                             audioAmplitude: speechManager.audioAmplitude
                         )
-                        .frame(width: 200, height: 200)
+                        .frame(width: 250, height: 250)
                     } else {
                         AudioEqualizerView(
                             audioAmplitude: speechManager.audioAmplitude
