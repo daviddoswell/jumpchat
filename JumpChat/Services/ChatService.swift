@@ -1,46 +1,63 @@
 import Foundation
-import OpenAISwift
+import OpenAI
 
 protocol ChatService {
-  func sendMessage(_ message: String) async throws -> String
-  func streamMessage(_ message: String) async throws -> AsyncStream<String>
+    func sendMessage(_ message: String) async throws -> String
+    func streamMessage(_ message: String) async throws -> AsyncStream<String>
 }
 
 class OpenAIChatService: ChatService {
-  private let client: OpenAISwift
-  
-  init(apiKey: String) {
-    self.client = OpenAISwift(config: .makeDefaultOpenAI(apiKey: apiKey))
-  }
-  
-  func sendMessage(_ message: String) async throws -> String {
-    let messages = [ChatMessage(role: .user, content: message)]
-    let response = try await client.sendChat(with: messages)
-    return response.choices?.first?.message.content ?? ""
-  }
-  
-  func streamMessage(_ message: String) async throws -> AsyncStream<String> {
-    let messages = [ChatMessage(role: .user, content: message)]
+    private let client: OpenAI
+    private let systemPrompt = """
+        You are a helpful AI assistant that provides clear, accurate, and well-structured responses.
+        Format your responses using markdown when appropriate for better readability.
+        Keep responses concise yet informative.
+        """
     
-    return AsyncStream<String> { continuation in
-      Task {
-        do {
-          let response = try await client.sendChat(with: messages)
-          if let content = response.choices?.first?.message.content {
-            var currentText = ""
-            // Stream word by word
-            let words = content.split(separator: " ")
-            for word in words {
-              currentText += String(word) + " "
-              continuation.yield(currentText)
-              try await Task.sleep(nanoseconds: 50_000_000) // 0.05 second delay
-            }
-          }
-        } catch {
-          continuation.yield("Error: \(error.localizedDescription)")
-        }
-        continuation.finish()
-      }
+    init(apiKey: String) {
+        self.client = OpenAI(apiToken: apiKey)
     }
-  }
+    
+    func sendMessage(_ message: String) async throws -> String {
+        let query = ChatQuery(
+            messages: [
+                .init(role: .system, content: systemPrompt)!,
+                .init(role: .user, content: message)!
+            ],
+            model: Model("gpt-4.1"),
+            temperature: 0.7
+        )
+        
+        let result = try await client.chats(query: query)
+        return result.choices[0].message.content ?? ""
+    }
+    
+    func streamMessage(_ message: String) async throws -> AsyncStream<String> {
+        let query = ChatQuery(
+            messages: [
+                .init(role: .system, content: systemPrompt)!,
+                .init(role: .user, content: message)!
+            ],
+            model: Model("gpt-4.1"),
+            temperature: 0.7,
+            stream: true
+        )
+        
+        return AsyncStream { continuation in
+            Task {
+                do {
+                    var fullResponse = ""
+                    for try await result in client.chatsStream(query: query) {
+                        if let content = result.choices[0].delta.content {
+                            fullResponse += content
+                            continuation.yield(fullResponse)
+                        }
+                    }
+                } catch {
+                    continuation.yield("Error: \(error.localizedDescription)")
+                }
+                continuation.finish()
+            }
+        }
+    }
 }

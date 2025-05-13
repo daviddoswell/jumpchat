@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4908A9C82DD3DC250031BCD5 /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 4908A9C72DD3DC250031BCD5 /* OpenAI */; };
 		4991986E2DD25E5200F206B2 /* ElevenLabsSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 4991986D2DD25E5200F206B2 /* ElevenLabsSDK */; };
-		499198712DD25E6C00F206B2 /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = 499198702DD25E6C00F206B2 /* OpenAISwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,7 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				499198712DD25E6C00F206B2 /* OpenAISwift in Frameworks */,
+				4908A9C82DD3DC250031BCD5 /* OpenAI in Frameworks */,
 				4991986E2DD25E5200F206B2 /* ElevenLabsSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -73,7 +73,7 @@
 			name = JumpChat;
 			packageProductDependencies = (
 				4991986D2DD25E5200F206B2 /* ElevenLabsSDK */,
-				499198702DD25E6C00F206B2 /* OpenAISwift */,
+				4908A9C72DD3DC250031BCD5 /* OpenAI */,
 			);
 			productName = JumpChat;
 			productReference = 4991985E2DD2599200F206B2 /* JumpChat.app */;
@@ -105,7 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				4991986C2DD25E5200F206B2 /* XCRemoteSwiftPackageReference "ElevenLabsSwift" */,
-				4991986F2DD25E6C00F206B2 /* XCRemoteSwiftPackageReference "OpenAISwift" */,
+				4908A9C62DD3DC250031BCD5 /* XCRemoteSwiftPackageReference "OpenAI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4991985F2DD2599200F206B2 /* Products */;
@@ -345,6 +345,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		4908A9C62DD3DC250031BCD5 /* XCRemoteSwiftPackageReference "OpenAI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MacPaw/OpenAI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.2;
+			};
+		};
 		4991986C2DD25E5200F206B2 /* XCRemoteSwiftPackageReference "ElevenLabsSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/elevenlabs/ElevenLabsSwift";
@@ -353,26 +361,18 @@
 				kind = branch;
 			};
 		};
-		4991986F2DD25E6C00F206B2 /* XCRemoteSwiftPackageReference "OpenAISwift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/adamrushy/OpenAISwift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.4.1;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4908A9C72DD3DC250031BCD5 /* OpenAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4908A9C62DD3DC250031BCD5 /* XCRemoteSwiftPackageReference "OpenAI" */;
+			productName = OpenAI;
+		};
 		4991986D2DD25E5200F206B2 /* ElevenLabsSDK */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4991986C2DD25E5200F206B2 /* XCRemoteSwiftPackageReference "ElevenLabsSwift" */;
 			productName = ElevenLabsSDK;
-		};
-		499198702DD25E6C00F206B2 /* OpenAISwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4991986F2DD25E6C00F206B2 /* XCRemoteSwiftPackageReference "OpenAISwift" */;
-			productName = OpenAISwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

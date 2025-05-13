@@ -1,5 +1,5 @@
 {
-  "originHash" : "fa4bff81cedad5af643a182ba5bc603f23137747d296e22d1f65eb9531ec619a",
+  "originHash" : "56e3b1dfc1b54617705ae7477605c4ba75e02b77dffb47b895eca5091f5a48e6",
   "pins" : [
     {
       "identity" : "devicekit",
@@ -20,12 +20,12 @@
       }
     },
     {
-      "identity" : "openaiswift",
+      "identity" : "openai",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/adamrushy/OpenAISwift",
+      "location" : "https://github.com/MacPaw/OpenAI",
       "state" : {
-        "revision" : "ca66fb720d6ebb657601db5a0852b830ae310a4c",
-        "version" : "1.4.1"
+        "revision" : "40f3d6cdb5a2ad72369984a8e0e99a28c6e46f47",
+        "version" : "0.4.2"
       }
     },
     {

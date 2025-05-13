@@ -1,5 +1,3 @@
-
-
 import SwiftUI
 
 struct ConversationSidebar: View {
@@ -15,12 +13,14 @@ struct ConversationSidebar: View {
                 ForEach(conversations.sorted(by: { $0.updatedAt > $1.updatedAt })) { conversation in
                     Button(action: {
                         onSelect(conversation)
-                        isPresented = false
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                            isPresented = false
+                        }
                     }) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(conversation.title)
                                 .fontWeight(.medium)
-                                .foregroundColor(.primary)
+                                .foregroundColor(.white)
                             
                             Text(conversation.messages.last?.content ?? "No messages")
                                 .font(.subheadline)
@@ -38,13 +38,21 @@ struct ConversationSidebar: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         onNewChat()
-                        isPresented = false
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                            isPresented = false
+                        }
                     }) {
                         Image(systemName: "square.and.pencil")
-                            .foregroundColor(.primary)
+                            .foregroundColor(.white)
                     }
                 }
             }
+            .background(.black)
+            .safeAreaInset(edge: .trailing) {
+                Divider()
+                    .background(Color.gray.opacity(0.3))
+            }
         }
+        .preferredColorScheme(.dark)
     }
 }
