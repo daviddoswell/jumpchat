@@ -1,219 +1,123 @@
 import SwiftUI
-import SceneKit
 
 struct OrbitingLinesView: View {
-    // MARK: - Properties
-    private let scene = SCNScene()
-    private let cameraNode = SCNNode()
-    private let lineNodes: [SCNNode]
+    let state: VisualizationState
+    let audioAmplitude: Float
     
-    @Binding var state: VisualizationState
-    @Binding var audioAmplitude: Float  // 0.0 to 1.0
+    @State private var transitionProgress: Double = 0
     
-    // MARK: - Animation Properties
-    @State private var currentRotationSpeed: Float = 0.5
-    @State private var currentPulseScale: Float = 1.0
-    @State private var floatOffset: Float = 0.0
+    private let lineCount = 4
+    private let radius: Double = 90  // Doubled from 45
+    private let baseSpeed: Double = 0.5  // Increased base speed
     
-    // MARK: - Init
-    init(state: Binding<VisualizationState>, audioAmplitude: Binding<Float>, numberOfLines: Int = 3) {
-        self._state = state
-        self._audioAmplitude = audioAmplitude
-        
-        // Initialize the orbiting lines
-        self.lineNodes = (0..<numberOfLines).map { index in
-            // Create a curved path
-            let path = UIBezierPath()
-            path.move(to: CGPoint(x: -0.5, y: 0))
-            
-            // Add a gentle curve
-            path.addCurve(
-                to: CGPoint(x: 0.5, y: 0),
-                controlPoint1: CGPoint(x: -0.2, y: 0.2),
-                controlPoint2: CGPoint(x: 0.2, y: -0.2)
-            )
-            
-            let shape = SCNShape(path: path, extrusionDepth: 0.01)
-            let material = SCNMaterial()
-            material.diffuse.contents = UIColor.white
-            material.emission.contents = UIColor(white: 0.3, alpha: 1.0) // Subtle glow
-            shape.materials = [material]
-            
-            let node = SCNNode(geometry: shape)
-            // Distribute lines evenly but with slight randomization
-            let angleOffset = Float.random(in: -0.1...0.1)
-            node.rotation = SCNVector4(0, 1, 0, .pi * 2 * Float(index) / Float(numberOfLines) + angleOffset)
-            return node
-        }
-    }
-    
-    // MARK: - Body
     var body: some View {
-        SceneView(
-            scene: scene,
-            pointOfView: cameraNode,
-            options: [.autoenablesDefaultLighting]
-        )
+        TimelineView(.animation) { timelineContext in
+            Canvas { context, size in
+                let time = timelineContext.date.timeIntervalSince1970
+                let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                
+                // Draw each line
+                for i in 0..<lineCount {
+                    let phase = Double(i) * .pi / 2
+                    // Increase speed for listening state
+                    let speed = state == .listening ?
+                        baseSpeed * (1.5 + Double(audioAmplitude)) : baseSpeed
+                    
+                    let path = Path { path in
+                        for t in stride(from: 0.0, to: 2 * .pi, by: 0.08) {
+                            var point3D = orbitPoint(time: time * speed, phase: phase, angle: t)
+                            
+                            // During transition, gradually flatten the z coordinate
+                            if transitionProgress > 0 {
+                                point3D.z *= (1 - transitionProgress)
+                            }
+                            
+                            let point2D = project3DTo2D(point3D: point3D, center: center)
+                            if t == 0 {
+                                path.move(to: point2D)
+                            } else {
+                                path.addLine(to: point2D)
+                            }
+                        }
+                    }
+                    drawGlowingLine(context: context, path: path)
+                }
+            }
+        }
         .onChange(of: state) { oldValue, newValue in
-            updateVisualization()
-        }
-        .onChange(of: audioAmplitude) { oldValue, newValue in
-            updateAudioResponse()
-        }
-        .onAppear {
-            setupScene()
+            withAnimation(.easeInOut(duration: 0.5)) {
+                transitionProgress = newValue == .responding ? 1 : 0
+            }
         }
     }
     
-    // MARK: - Private Methods
-    private func setupScene() {
-        // Setup camera
-        cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 5)
-        scene.rootNode.addChildNode(cameraNode)
+    private func orbitPoint(time: Double, phase: Double, angle: Double) -> Vector3D {
+        let primaryWave = Darwin.sin(angle * 2 + time) * 0.15
+        let secondaryWave = Darwin.sin(angle * 1.5 + time * 1.2) * 0.08
+        let orbitRadius = radius * (1 + primaryWave + secondaryWave)
         
-        // Add ambient light for better visibility
-        let ambientLight = SCNNode()
-        ambientLight.light = SCNLight()
-        ambientLight.light?.type = .ambient
-        ambientLight.light?.intensity = 500
-        scene.rootNode.addChildNode(ambientLight)
+        let x = orbitRadius * cos(angle) * cos(phase + time * 0.4)
+        let y = orbitRadius * sin(angle) * 1.1
+        let z = orbitRadius * cos(angle) * sin(phase + time * 0.4)
         
-        // Add lines to scene
-        lineNodes.forEach { node in
-            scene.rootNode.addChildNode(node)
-        }
+        let rotationAngle = time * (baseSpeed * 0.8)
+        let rotatedX = x * cos(rotationAngle) - z * sin(rotationAngle)
+        let rotatedZ = x * sin(rotationAngle) + z * cos(rotationAngle)
         
-        // Start animations
-        startAnimations()
+        return Vector3D(x: rotatedX, y: y, z: rotatedZ)
     }
     
-    private func startAnimations() {
-        startOrbiting()
-        startFloating()
-        startPulsing()
+    private func project3DTo2D(point3D: Vector3D, center: CGPoint) -> CGPoint {
+        let distance: Double = 120
+        let scale = distance / (distance - point3D.z * 0.7)
+        let x = center.x + point3D.x * scale
+        let y = center.y + point3D.y * scale
+        return CGPoint(x: x, y: y)
     }
     
-    private func updateVisualization() {
-        // Update rotation speed
-        lineNodes.forEach { node in
-            node.removeAllActions()
-        }
-        
-        // Don't start new animations if responding
-        guard state != .responding else {
-            prepareForEqualizer()
-            return
-        }
-        
-        startAnimations()
-    }
-    
-    private func updateAudioResponse() {
-        // Scale base animations by audio amplitude
-        let scaleFactor = 1.0 + (audioAmplitude * 0.5)
-        
-        lineNodes.forEach { node in
-            node.scale = SCNVector3(scaleFactor, scaleFactor, scaleFactor)
-        }
-    }
-    
-    private func prepareForEqualizer() {
-        // Animate lines to horizontal position
-        SCNTransaction.begin()
-        SCNTransaction.animationDuration = 0.5
-        
-        lineNodes.forEach { node in
-            node.rotation = SCNVector4(0, 0, 0, 0)
-            node.position = SCNVector3(0, 0, 0)
-        }
-        
-        SCNTransaction.commit()
-    }
-    
-    private func startOrbiting() {
-        let baseSpeed = state.rotationSpeed
-        
-        lineNodes.forEach { node in
-            // Create a compound rotation
-            let orbitDuration = TimeInterval(2.0 + Double.random(in: 0...1))
-            let rotateAction = SCNAction.repeatForever(
-                SCNAction.group([
-                    SCNAction.rotateBy(x: 0, y: CGFloat(baseSpeed), z: 0, duration: orbitDuration),
-                    SCNAction.rotateBy(x: CGFloat.random(in: -0.2...0.2), y: 0, z: 0, duration: orbitDuration * 1.5)
-                ])
-            )
-            node.runAction(rotateAction)
-        }
-    }
-    
-    private func startFloating() {
-        let intensity = state.pulseIntensity
-        let floatAction = SCNAction.repeatForever(
-            SCNAction.sequence([
-                SCNAction.moveBy(x: 0, y: 0.1 * CGFloat(intensity), z: 0, duration: 1.5),
-                SCNAction.moveBy(x: 0, y: -0.1 * CGFloat(intensity), z: 0, duration: 1.5)
-            ])
+    private func drawGlowingLine(context: GraphicsContext, path: Path) {
+        // Super soft outer glow
+        var outerContext = context
+        outerContext.addFilter(.blur(radius: 12))
+        outerContext.stroke(
+            path,
+            with: .color(.white.opacity(0.06)),
+            lineWidth: 18
         )
         
-        lineNodes.forEach { node in
-            // Add slight delay to each line for more organic motion
-            let delay = Double.random(in: 0...0.5)
-            node.runAction(
-                SCNAction.sequence([
-                    SCNAction.wait(duration: delay),
-                    floatAction
-                ])
-            )
-        }
-    }
-    
-    private func startPulsing() {
-        let intensity = state.pulseIntensity
-        let pulseAction = SCNAction.repeatForever(
-            SCNAction.sequence([
-                SCNAction.scale(to: 1.1 * CGFloat(intensity), duration: 1.0),
-                SCNAction.scale(to: 0.9 * CGFloat(intensity), duration: 1.0)
-            ])
+        // Soft middle glow
+        var middleContext = context
+        middleContext.addFilter(.blur(radius: 8))
+        middleContext.stroke(
+            path,
+            with: .color(.white.opacity(0.1)),
+            lineWidth: 12
         )
         
-        lineNodes.forEach { node in
-            // Add slight delay to each line
-            let delay = Double.random(in: 0...0.3)
-            node.runAction(
-                SCNAction.sequence([
-                    SCNAction.wait(duration: delay),
-                    pulseAction
-                ])
-            )
-        }
+        // Inner glow
+        var innerContext = context
+        innerContext.addFilter(.blur(radius: 4))
+        innerContext.stroke(
+            path,
+            with: .color(.white.opacity(0.2)),
+            lineWidth: 8
+        )
+        
+        // Core glow
+        var coreContext = context
+        coreContext.addFilter(.blur(radius: 2))
+        coreContext.stroke(
+            path,
+            with: .color(.white.opacity(0.4)),
+            lineWidth: 3
+        )
     }
 }
 
 #Preview {
-    StateWrapper()
-}
-
-// Preview helper
-private struct StateWrapper: View {
-    @State private var state: VisualizationState = .idle
-    @State private var amplitude: Float = 0.0
-    
-    var body: some View {
-        VStack {
-            OrbitingLinesView(state: $state, audioAmplitude: $amplitude)
-                .frame(width: 300, height: 300)
-                .background(Color.black)
-            
-            Picker("State", selection: $state) {
-                Text("Idle").tag(VisualizationState.idle)
-                Text("Listening").tag(VisualizationState.listening)
-                Text("Processing").tag(VisualizationState.processing)
-                Text("Responding").tag(VisualizationState.responding)
-            }
-            
-            Slider(value: $amplitude, in: 0...1)
-        }
-        .padding()
+    ZStack {
+        Color.black.ignoresSafeArea()
+        OrbitingLinesView(state: .listening, audioAmplitude: 0.5)
+            .frame(width: 300, height: 300)
     }
 }

@@ -1,11 +1,10 @@
-
 import Foundation
 
 enum VisualizationState {
-    case idle           // Default orbiting state
-    case listening      // When user is speaking (faster spin, more pulse)
-    case processing     // Transition state before AI speaks
-    case responding     // When AI is speaking (horizontal equalizer)
+    case idle        // Default, no animation
+    case listening   // 3D orbiting lines, responding to user voice
+    case processing  // Transitioning from orbit to equalizer
+    case responding  // Single-line equalizer for AI voice
     
     var rotationSpeed: Float {
         switch self {

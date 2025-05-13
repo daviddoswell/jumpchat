@@ -4,8 +4,6 @@ import OpenAISwift
 struct ContentView: View {
     @StateObject private var chatManager: ChatStateManager = ServiceContainer.shared.stateManager
     @State private var messageText = ""
-    @AppStorage("hasCompletedPermissions") private var hasCompletedPermissions = false
-    @State private var showPermissions = false
     
     var body: some View {
         NavigationStack {
@@ -119,14 +117,6 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .fullScreenCover(isPresented: $showPermissions) {
-            PermissionsView(showPermissions: $showPermissions)
-        }
-        .onAppear {
-            if !hasCompletedPermissions {
-                showPermissions = true
-            }
-        }
     }
 }
 

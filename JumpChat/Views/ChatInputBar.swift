@@ -7,11 +7,7 @@ struct ChatInputBar: View {
     let onSend: () -> Void
     
     @State private var showVoiceChat = false
-    
-    // Get keyboard width accounting for safe area
-    private var keyboardWidth: CGFloat {
-        UIScreen.main.bounds.width
-    }
+    @StateObject private var permissionsManager = PermissionsManager()
     
     var body: some View {
         VStack(spacing: 0) {
@@ -51,7 +47,11 @@ struct ChatInputBar: View {
                         }
                         
                         Button {
-                            showVoiceChat = true
+                            Task {
+                                if await permissionsManager.requestMicrophoneAccess() {
+                                    showVoiceChat = true
+                                }
+                            }
                         } label: {
                             Image(systemName: "waveform")
                                 .font(.system(size: 20))
@@ -79,5 +79,10 @@ struct ChatInputBar: View {
         .fullScreenCover(isPresented: $showVoiceChat) {
             VoiceVisualizationView()
         }
+    }
+    
+    // Get keyboard width accounting for safe area
+    private var keyboardWidth: CGFloat {
+        UIScreen.main.bounds.width
     }
 }
