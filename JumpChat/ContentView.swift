@@ -52,19 +52,19 @@ struct ContentView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 SuggestionButton(
-                                    title: "Create a painting",
-                                    subtitle: "in Renaissance-style",
-                                    action: { messageText = "Create a Renaissance-style painting" }
+                                    title:  "Portfolio analysis",
+                                    subtitle: "review my investments",
+                                    action: { messageText = "Can you analyze my current investment portfolio and suggest optimizations?" }
                                 )
                                 SuggestionButton(
-                                    title: "Write a story",
-                                    subtitle: "about an adventure",
-                                    action: { messageText = "Write a story about an adventure" }
+                                    title: "Tax strategies",
+                                    subtitle: "minimize tax liability",
+                                    action: { messageText = "What tax optimization strategies would you recommend for high-net-worth individuals?" }
                                 )
                                 SuggestionButton(
-                                    title: "Help me study",
-                                    subtitle: "for my exam",
-                                    action: { messageText = "Help me study for my exam" }
+                                    title: "Estate planning",
+                                    subtitle: "wealth transfer options",
+                                    action: { messageText = "Help me understand the best options for transferring wealth to my heirs efficiently" }
                                 )
                             }
                             .padding(.horizontal, 12)
@@ -86,7 +86,7 @@ struct ContentView: View {
                     }
                     .padding(.bottom, keyboardManager.isVisible ? 0 : -34)
                     .offset(y: keyboardManager.isVisible ?
-                           -keyboardManager.keyboardRect.height + 40 : 
+                           -keyboardManager.keyboardRect.height + 40 :
                            0)
                 }
                 .ignoresSafeArea(.keyboard)
