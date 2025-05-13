@@ -5,6 +5,10 @@ struct ContentView: View {
     @StateObject private var chatManager: ChatStateManager = ServiceContainer.shared.stateManager
     @StateObject private var keyboardManager = KeyboardManager()
     @State private var messageText = ""
+    @State private var showingSidebar = false
+    @State private var conversations: [Conversation] = []
+    
+    private let storageService: StorageService = try! LocalStorageService()
     
     var body: some View {
         NavigationStack {
@@ -33,6 +37,9 @@ struct ContentView: View {
                             withAnimation {
                                 proxy.scrollTo(chatManager.currentConversation.messages.last?.id, anchor: .bottom)
                             }
+                            // Save conversation when messages change
+                            try? storageService.saveConversation(chatManager.currentConversation)
+                            loadConversations()
                         }
                         .onChange(of: chatManager.state) { oldValue, newValue in
                             if newValue == .thinking {
@@ -52,7 +59,7 @@ struct ContentView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 SuggestionButton(
-                                    title:  "Portfolio analysis",
+                                    title: "Portfolio analysis",
                                     subtitle: "review my investments",
                                     action: { messageText = "Can you analyze my current investment portfolio and suggest optimizations?" }
                                 )
@@ -84,12 +91,8 @@ struct ContentView: View {
                             }
                         )
                     }
-                    .padding(.bottom, keyboardManager.isVisible ? 0 : -34)
-                    .offset(y: keyboardManager.isVisible ?
-                           -keyboardManager.keyboardRect.height + 40 :
-                           0)
+                    .offset(y: keyboardManager.inputOffset)
                 }
-                .ignoresSafeArea(.keyboard)
             }
             .navigationTitle("Jump Chat")
             .navigationBarTitleDisplayMode(.inline)
@@ -97,13 +100,13 @@ struct ContentView: View {
             .toolbarBackground(Color.black, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {}) {
+                    Button(action: { showingSidebar = true }) {
                         Image(systemName: "line.3.horizontal")
                             .foregroundColor(.primary)
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {}) {
+                    Button(action: startNewChat) {
                         Image(systemName: "square.and.pencil")
                             .foregroundColor(.primary)
                     }
@@ -111,15 +114,46 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .ignoresSafeArea(.container, edges: .bottom)  // Allow content to extend under safe area
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
-                                             to: nil,
-                                             from: nil,
-                                             for: nil)
-            }
+        .sheet(isPresented: $showingSidebar) {
+            ConversationSidebar(
+                isPresented: $showingSidebar,
+                selectedConversation: Binding(
+                    get: { chatManager.currentConversation },
+                    set: { newConversation in
+                        if let conversation = newConversation {
+                            loadConversation(conversation)
+                        }
+                    }
+                ),
+                conversations: conversations,
+                onNewChat: startNewChat,
+                onSelect: loadConversation
+            )
+            .presentationDetents([.medium, .large])
         }
+        .onAppear {
+            loadConversations()
+            // Show keyboard immediately
+            UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
+                                         to: nil,
+                                         from: nil,
+                                         for: nil)
+        }
+    }
+    
+    private func loadConversations() {
+        if let conversations = try? storageService.loadAllConversations() {
+            self.conversations = conversations.sorted(by: { $0.updatedAt > $1.updatedAt })
+        }
+    }
+    
+    private func loadConversation(_ conversation: Conversation) {
+        chatManager.loadConversation(conversation)
+    }
+    
+    private func startNewChat() {
+        chatManager.startNewConversation()
+        messageText = ""
     }
 }
 

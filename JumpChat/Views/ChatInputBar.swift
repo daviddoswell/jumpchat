@@ -78,6 +78,7 @@ struct ChatInputBar: View {
         .padding(.vertical, 12)
         .background(Color(white: 0.17))
         .cornerRadius(keyboardVisible ? 12 : 24, corners: keyboardVisible ? [.topLeft, .topRight] : .allCorners)
+        .frame(height: 80)
         .frame(maxWidth: .infinity)
         .ignoresSafeArea(.container, edges: .bottom)
         .fullScreenCover(isPresented: $showVoiceChat) {
