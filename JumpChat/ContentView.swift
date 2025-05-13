@@ -5,13 +5,12 @@ struct ContentView: View {
     @StateObject private var chatManager: ChatStateManager = ServiceContainer.shared.stateManager
     @StateObject private var keyboardManager = KeyboardManager()
     @State private var messageText = ""
-    @FocusState private var isInputFocused: Bool
     
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
                 ZStack(alignment: .bottom) {
-                    // Tap gesture to dismiss keyboard
+                    // Chat area with tap to dismiss
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(spacing: 12) {
@@ -28,7 +27,7 @@ struct ContentView: View {
                                 }
                             }
                             .padding(.vertical, 8)
-                            .padding(.bottom, keyboardManager.isVisible ? geometry.safeAreaInsets.bottom + keyboardManager.keyboardRect.height + 140 : 180)
+                            .padding(.bottom, keyboardManager.isVisible ? keyboardManager.keyboardRect.height + 180 : 180)
                         }
                         .onChange(of: chatManager.currentConversation.messages.count) { oldValue, newValue in
                             withAnimation {
@@ -43,13 +42,13 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .contentShape(Rectangle()) // Make sure entire scroll area is tappable
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         keyboardManager.hideKeyboard()
                     }
                     
+                    // Input section
                     VStack(spacing: 16) {
-                        // Suggestions scroll view
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 SuggestionButton(
@@ -71,9 +70,9 @@ struct ContentView: View {
                             .padding(.horizontal, 12)
                         }
                         .frame(height: 70)
-                        .background(Color.black)
                         
                         ChatInputBar(
+                            keyboardVisible: keyboardManager.isVisible,
                             text: $messageText,
                             isLoading: chatManager.state == .thinking || chatManager.state == .streaming,
                             onSend: {
@@ -85,9 +84,12 @@ struct ContentView: View {
                             }
                         )
                     }
-                    .background(Color.black)
-                    .offset(y: keyboardManager.isVisible ? -keyboardManager.keyboardRect.height + geometry.safeAreaInsets.bottom : 0)
+                    .padding(.bottom, keyboardManager.isVisible ? 0 : -34)
+                    .offset(y: keyboardManager.isVisible ?
+                           -keyboardManager.keyboardRect.height + 40 : 
+                           0)
                 }
+                .ignoresSafeArea(.keyboard)
             }
             .navigationTitle("Jump Chat")
             .navigationBarTitleDisplayMode(.inline)
@@ -107,12 +109,17 @@ struct ContentView: View {
                     }
                 }
             }
-            .ignoresSafeArea(.keyboard)
-            .onAppear {
-                isInputFocused = true
-            }
         }
         .preferredColorScheme(.dark)
+        .ignoresSafeArea(.container, edges: .bottom)  // Allow content to extend under safe area
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
+                                             to: nil,
+                                             from: nil,
+                                             for: nil)
+            }
+        }
     }
 }
 
