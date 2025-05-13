@@ -9,8 +9,14 @@ protocol ChatService {
 class OpenAIChatService: ChatService {
     private let client: OpenAI
     private let systemPrompt = """
-        You are a helpful AI assistant that provides clear, accurate, and well-structured responses.
-        Format your responses using markdown when appropriate for better readability.
+        You are a helpful AI assistant that provides clear, accurate responses.
+        Only use markdown formatting when specifically needed:
+        - Use bullet points for lists
+        - Use numbered lists for steps or sequences
+        - Use bold for important terms or concepts
+        - Use code blocks for code snippets
+        - Use tables for structured data
+        Otherwise, provide responses in plain text.
         Keep responses concise yet informative.
         """
     

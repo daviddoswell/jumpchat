@@ -4,11 +4,32 @@ struct MessageBubble: View {
     let message: String
     let isUser: Bool
     
+    private var containsMarkdown: Bool {
+        message.contains("*") ||
+        message.contains("#") ||
+        message.contains("`") ||
+        message.contains("- ") ||
+        message.contains("1. ") ||
+        message.contains("|") ||
+        message.contains("\n")
+    }
+    
+    private var attributedText: AttributedString {
+        if containsMarkdown {
+            do {
+                return try AttributedString(markdown: message)
+            } catch {
+                return AttributedString(message)
+            }
+        }
+        return AttributedString(message)
+    }
+    
     var body: some View {
         HStack {
             if isUser {
                 Spacer()
-                Text(message)
+                Text(attributedText)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(Color(.systemGray6))
@@ -19,9 +40,12 @@ struct MessageBubble: View {
                     StreamingText(text: message, isStreaming: !isUser)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 4)
+                        .textSelection(.enabled)
                     
                     HStack(spacing: 28) {
-                        Button(action: {}) {
+                        Button(action: {
+                            UIPasteboard.general.string = message
+                        }) {
                             Image(systemName: "doc.on.doc")
                                 .font(.system(size: 18))
                         }
