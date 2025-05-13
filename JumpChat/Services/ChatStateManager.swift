@@ -15,9 +15,24 @@ class ChatStateManager: ObservableObject {
         self.storageService = storageService
         self.currentConversation = Conversation()
         
-        // Load conversations on init
         Task {
+            // Just load conversations, don't restore last active
             await loadConversations()
+        }
+    }
+    
+    private func restoreState() async {
+        do {
+            // First load all conversations
+            conversations = try storageService.loadAllConversations()
+            
+            // Then restore last active conversation
+            if let lastActiveId = try storageService.loadLastActiveConversation(),
+               let lastConversation = try storageService.loadConversation(id: lastActiveId) {
+                currentConversation = lastConversation
+            }
+        } catch {
+            print("Failed to restore state: \(error)")
         }
     }
     
@@ -92,7 +107,13 @@ class ChatStateManager: ObservableObject {
                         feedbackGenerator.impactOccurred()
                         isFirstToken = false
                     }
-                    currentConversation.messages[index].content = chunk // Use = instead of += since we're getting full text each time
+                    // Accumulate chunks
+                    currentConversation.messages[index].content += chunk
+                    
+                    // Save periodically during streaming to prevent loss
+                    if currentConversation.messages[index].content.count % 100 == 0 {
+                        try? storageService.saveConversation(currentConversation)
+                    }
                 }
             }
             
@@ -121,6 +142,13 @@ class ChatStateManager: ObservableObject {
     func loadConversation(_ conversation: Conversation) {
         self.currentConversation = conversation
         state = .idle
+        
+        // Save as last active
+        do {
+            try storageService.saveLastActiveConversation(id: conversation.id)
+        } catch {
+            print("Failed to save last active conversation: \(error)")
+        }
     }
     
     func startNewConversation() {

@@ -52,11 +52,9 @@ class OpenAIChatService: ChatService {
         return AsyncStream { continuation in
             Task {
                 do {
-                    var fullResponse = ""
                     for try await result in client.chatsStream(query: query) {
                         if let content = result.choices[0].delta.content {
-                            fullResponse += content
-                            continuation.yield(fullResponse)
+                            continuation.yield(content)
                         }
                     }
                 } catch {
