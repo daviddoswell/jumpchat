@@ -22,25 +22,25 @@ class OpenAIChatService: ChatService {
   func streamMessage(_ message: String) async throws -> AsyncStream<String> {
     let messages = [ChatMessage(role: .user, content: message)]
     
-    let (stream, continuation) = AsyncStream<String>.makeStream()
-    
-    Task {
-      do {
-        let response = try await client.sendChat(with: messages)
-        if let content = response.choices?.first?.message.content {
-          // For now, we'll simulate streaming by breaking the response into words
-          let words = content.split(separator: " ")
-          for word in words {
-            continuation.yield(String(word) + " ")
-            try await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
+    return AsyncStream<String> { continuation in
+      Task {
+        do {
+          let response = try await client.sendChat(with: messages)
+          if let content = response.choices?.first?.message.content {
+            var currentText = ""
+            // Stream word by word
+            let words = content.split(separator: " ")
+            for word in words {
+              currentText += String(word) + " "
+              continuation.yield(currentText)
+              try await Task.sleep(nanoseconds: 50_000_000) // 0.05 second delay
+            }
           }
+        } catch {
+          continuation.yield("Error: \(error.localizedDescription)")
         }
-      } catch {
-        continuation.yield("Error: \(error.localizedDescription)")
+        continuation.finish()
       }
-      continuation.finish()
     }
-    
-    return stream
   }
 }

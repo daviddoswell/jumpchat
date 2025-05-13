@@ -16,7 +16,7 @@ struct MessageBubble: View {
                     .padding(.horizontal, 16)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(message)
+                    StreamingText(text: message, isStreaming: !isUser)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 4)
                     

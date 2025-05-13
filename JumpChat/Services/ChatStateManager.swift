@@ -51,9 +51,16 @@ class ChatStateManager: ObservableObject {
             
             // Start streaming
             state = .streaming
+            var isFirstToken = true
+            let feedbackGenerator = UIImpactFeedbackGenerator(style: .light)
+            
             for try await chunk in try await chatService.streamMessage(userMessage.content) {
                 if let index = currentConversation.messages.firstIndex(where: { $0.id == responseId }) {
-                    currentConversation.messages[index].content += chunk
+                    if isFirstToken {
+                        feedbackGenerator.impactOccurred()
+                        isFirstToken = false
+                    }
+                    currentConversation.messages[index].content = chunk // Use = instead of += since we're getting full text each time
                 }
             }
             
