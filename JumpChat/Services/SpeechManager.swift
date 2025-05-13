@@ -8,6 +8,7 @@ final class SpeechManager: ObservableObject {
     // MARK: - Published Properties
     @Published private(set) var state: VisualizationState = .idle
     @Published private(set) var audioAmplitude: Float = 0.0
+    @Published private(set) var isMuted: Bool = false
     @Published var error: String?
     
     // MARK: - Private Properties
@@ -21,7 +22,7 @@ final class SpeechManager: ObservableObject {
     
     // MARK: - Public Methods
     func startVoiceChat() async throws {
-        state = .listening
+        state = .listening  // Start in listening state
         provideFeedback(intensity: 0.3)
         audioAmplitude = 0.0  // Reset amplitude to 0
         
@@ -40,14 +41,26 @@ final class SpeechManager: ObservableObject {
         }
     }
     
+    func toggleMute() {
+        isMuted.toggle()
+        provideFeedback(intensity: 0.2)
+        
+        // TODO: Implement actual muting in ElevenLabsSDK
+        // For now, just affect the visualization
+        if isMuted {
+            audioAmplitude = 0.0
+        }
+    }
+    
     // Make endVoiceChat nonisolated since it's called from callbacks
     nonisolated func endVoiceChat() {
         Task { @MainActor in
             conversation?.endSession()
             sessionTimer?.invalidate()
             audioLevelTimer?.invalidate()
-            audioAmplitude = 0.0  // Reset amplitude to 0
+            audioAmplitude = 0.0
             state = .idle
+            isMuted = false  // Reset mute state
             provideFeedback(intensity: 0.6)
         }
     }
@@ -75,16 +88,20 @@ final class SpeechManager: ObservableObject {
         
         callbacks.onModeChange = { [weak self] mode in
             Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 switch mode {
                 case .listening:
-                    self?.state = .listening
-                    self?.audioAmplitude = 0.0  // Reset amplitude on mode change
-                    self?.provideFeedback(intensity: 0.2)
+                    self.state = .listening
+                    // Only reset amplitude if not muted
+                    if !self.isMuted {
+                        self.audioAmplitude = 0.0
+                    }
+                    self.provideFeedback(intensity: 0.2)
                 case .speaking:
-                    self?.state = .responding
-                    self?.provideFeedback(intensity: 0.4)
+                    self.state = .responding
+                    self.provideFeedback(intensity: 0.4)
                 @unknown default:
-                    self?.state = .idle
+                    self.state = .idle
                 }
             }
         }
@@ -107,15 +124,20 @@ final class SpeechManager: ObservableObject {
         audioLevelTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                // For responding state, use smooth animation
+                // Don't update amplitude if muted
+                guard !self.isMuted else { return }
+                
                 if self.state == .responding {
+                    // AI is speaking - use smooth animation
                     let targetAmplitude: Float = 0.7
                     let currentAmplitude = self.audioAmplitude
                     let newAmplitude = currentAmplitude + (targetAmplitude - currentAmplitude) * 0.2
                     self.audioAmplitude = newAmplitude + Float.random(in: -0.1...0.1)
+                } else {
+                    // TODO: Get real voice input levels from ElevenLabs
+                    // For now, keep at 0 unless we detect voice
+                    self.audioAmplitude = 0.0
                 }
-                // For listening state, we should get actual audio levels from ElevenLabs
-                // For now, keep amplitude at 0 until we get real voice input
             }
         }
     }

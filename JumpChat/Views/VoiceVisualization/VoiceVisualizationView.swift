@@ -56,15 +56,13 @@ struct VoiceVisualizationView: View {
                 // Bottom buttons
                 HStack(spacing: 60) {
                     Button {
-                        Task {
-                            try await speechManager.startVoiceChat()
-                        }
+                        speechManager.toggleMute()
                     } label: {
                         Circle()
                             .fill(Color(white: 0.2))
                             .frame(width: 60, height: 60)
                             .overlay {
-                                Image(systemName: "mic.fill")
+                                Image(systemName: speechManager.isMuted ? "mic.slash.fill" : "mic.fill")
                                     .font(.title2)
                                     .foregroundStyle(.white)
                             }
@@ -93,6 +91,14 @@ struct VoiceVisualizationView: View {
             }
         } message: {
             Text(speechManager.error ?? "")
+        }
+        .task {
+            // Start voice chat immediately when view appears
+            do {
+                try await speechManager.startVoiceChat()
+            } catch {
+                speechManager.error = error.localizedDescription
+            }
         }
     }
 }
