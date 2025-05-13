@@ -54,27 +54,30 @@ struct ContentView: View {
                         
                         // Input section
                         VStack(spacing: 8) {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    SuggestionButton(
-                                        title: "Portfolio analysis",
-                                        subtitle: "review my investments",
-                                        action: { messageText = "Can you analyze my current investment portfolio and suggest optimizations?" }
-                                    )
-                                    SuggestionButton(
-                                        title: "Tax strategies",
-                                        subtitle: "minimize tax liability",
-                                        action: { messageText = "What tax optimization strategies would you recommend for high-net-worth individuals?" }
-                                    )
-                                    SuggestionButton(
-                                        title: "Estate planning",
-                                        subtitle: "wealth transfer options",
-                                        action: { messageText = "Help me understand the best options for transferring wealth to my heirs efficiently" }
-                                    )
+                            // Only show suggestions if there are no messages
+                            if chatManager.currentConversation.messages.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        SuggestionButton(
+                                            title: "Portfolio analysis",
+                                            subtitle: "review my investments",
+                                            action: { messageText = "Can you analyze my current investment portfolio and suggest optimizations?" }
+                                        )
+                                        SuggestionButton(
+                                            title: "Tax strategies",
+                                            subtitle: "minimize tax liability",
+                                            action: { messageText = "What tax optimization strategies would you recommend for high-net-worth individuals?" }
+                                        )
+                                        SuggestionButton(
+                                            title: "Estate planning",
+                                            subtitle: "wealth transfer options",
+                                            action: { messageText = "Help me understand the best options for transferring wealth to my heirs efficiently" }
+                                        )
+                                    }
+                                    .padding(.horizontal, 12)
                                 }
-                                .padding(.horizontal, 12)
+                                .frame(height: 70)
                             }
-                            .frame(height: 70)
                             
                             ChatInputBar(
                                 keyboardVisible: keyboardManager.isVisible,
