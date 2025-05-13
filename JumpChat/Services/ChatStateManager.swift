@@ -30,6 +30,38 @@ class ChatStateManager: ObservableObject {
         }
     }
     
+    private func generateConversationTitle(_ text: String) -> String {
+        // Remove more question starters and filler words
+        let starters = [
+            "Can you", "Could you", "Please", "Help me",
+            "I need", "How to", "What is", "How do I",
+            "I want to", "Tell me about", "Explain",
+            "Give me", "Show me"
+        ].joined(separator: "|")
+        
+        let cleaned = text
+            .replacingOccurrences(of: "^(\(starters)) ", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+        
+        // For very short messages, use them directly
+        if cleaned.count <= 40 {
+            return cleaned
+        }
+        
+        // Look for natural breaks (end of first sentence or question)
+        if let endIndex = cleaned.firstIndex(where: { ".!?".contains($0) }) {
+            let sentence = String(cleaned[..<endIndex]).trimmingCharacters(in: .whitespaces)
+            if sentence.count <= 50 {
+                return sentence
+            }
+        }
+        
+        // If still too long, take first meaningful phrase
+        let words = cleaned.split(separator: " ")
+        let title = words.prefix(6).joined(separator: " ")
+        return title.count < 40 ? title + "..." : title
+    }
+    
     func sendMessage(_ text: String) async {
         guard !text.isEmpty else { return }
         
@@ -39,7 +71,7 @@ class ChatStateManager: ObservableObject {
         
         // Update conversation title if it's the first message
         if currentConversation.messages.count == 1 {
-            currentConversation.title = text.prefix(50).description
+            currentConversation.title = generateConversationTitle(text)
         }
         
         currentConversation.updatedAt = Date()
