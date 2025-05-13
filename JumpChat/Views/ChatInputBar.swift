@@ -6,30 +6,29 @@ struct ChatInputBar: View {
     let isLoading: Bool
     let onSend: () -> Void
     
+    @FocusState private var isInputFocused: Bool
     @State private var showVoiceChat = false
     @StateObject private var permissionsManager = PermissionsManager()
     
     var body: some View {
         VStack(spacing: 0) {
-            // Single unified input container
+            // Main input container
             VStack(spacing: 16) {
                 // Text input field with placeholder
                 ZStack(alignment: .leading) {
                     if text.isEmpty {
-                        HStack {
-                            Spacer()
-                            Text("Ask anything")
-                                .foregroundColor(.gray.opacity(0.8))
-                            Spacer()
-                        }
+                        Text("Ask anything")
+                            .foregroundColor(.gray.opacity(0.8))
+                            .padding(.horizontal, 2)
                     }
                     TextField("", text: $text, axis: .vertical)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.leading)
                         .textFieldStyle(.plain)
-                        .frame(minHeight: 20)
+                        .frame(minHeight: 24)
+                        .focused($isInputFocused)
                 }
-                .padding(.top, 4)
+                .padding(.top, 6)
                 
                 // Bottom controls
                 HStack(spacing: 20) {
@@ -74,17 +73,39 @@ struct ChatInputBar: View {
                         .disabled(isLoading)
                     }
                 }
+                .padding(.bottom, 12)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(white: 0.17)) // Darker gray like ChatGPT
-            .cornerRadius(12)
-            .padding(.horizontal, 8)
+            .padding(.top, 12)
         }
-        .background(Color.black)
+        .background(Color(white: 0.17))
+        .cornerRadius(12, corners: [.topLeft, .topRight]) // Only round top corners
         .ignoresSafeArea(.keyboard)
+        .frame(maxWidth: .infinity) // Extend full width
         .fullScreenCover(isPresented: $showVoiceChat) {
             VoiceVisualizationView()
         }
+        .onTapGesture {
+            isInputFocused = true
+        }
+    }
+}
+
+// Helper for specific corner rounding
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect,
+                              byRoundingCorners: corners,
+                              cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
     }
 }

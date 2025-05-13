@@ -3,103 +3,93 @@ import OpenAISwift
 
 struct ContentView: View {
     @StateObject private var chatManager: ChatStateManager = ServiceContainer.shared.stateManager
+    @StateObject private var keyboardManager = KeyboardManager()
     @State private var messageText = ""
+    @FocusState private var isInputFocused: Bool
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            if chatManager.currentConversation.messages.isEmpty {
-                                VStack {
-                                    HStack {
-                                        Spacer()
-                                        Text("Hello")
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 12)
-                                            .background(Color.black)
-                                            .cornerRadius(24)
-                                            .padding(.horizontal, 16)
-                                    }
-                                    
+            GeometryReader { geometry in
+                ZStack(alignment: .bottom) {
+                    // Tap gesture to dismiss keyboard
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            keyboardManager.hideKeyboard()
+                        }
+                    
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(chatManager.currentConversation.messages) { message in
                                     MessageBubble(
-                                        message: "Hey there! How can I help you today?",
-                                        isUser: false
+                                        message: message.content,
+                                        isUser: message.isUser
                                     )
-                                    
-                                    Spacer()
+                                }
+                                if chatManager.state == .thinking {
+                                    ThinkingBubble()
+                                        .id("thinking")
+                                        .transition(.opacity)
                                 }
                             }
-                            ForEach(chatManager.currentConversation.messages) { message in
-                                MessageBubble(
-                                    message: message.content,
-                                    isUser: message.isUser
+                            .padding(.vertical, 8)
+                            .padding(.bottom, keyboardManager.isVisible ? geometry.safeAreaInsets.bottom + keyboardManager.keyboardRect.height + 140 : 180)
+                        }
+                        .onChange(of: chatManager.currentConversation.messages.count) { oldValue, newValue in
+                            withAnimation {
+                                proxy.scrollTo(chatManager.currentConversation.messages.last?.id, anchor: .bottom)
+                            }
+                        }
+                        .onChange(of: chatManager.state) { oldValue, newValue in
+                            if newValue == .thinking {
+                                withAnimation {
+                                    proxy.scrollTo("thinking", anchor: .bottom)
+                                }
+                            }
+                        }
+                    }
+                    
+                    VStack(spacing: 16) { 
+                        // Suggestions scroll view
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                SuggestionButton(
+                                    title: "Create a painting",
+                                    subtitle: "in Renaissance-style",
+                                    action: { messageText = "Create a Renaissance-style painting" }
+                                )
+                                SuggestionButton(
+                                    title: "Write a story",
+                                    subtitle: "about an adventure",
+                                    action: { messageText = "Write a story about an adventure" }
+                                )
+                                SuggestionButton(
+                                    title: "Help me study",
+                                    subtitle: "for my exam",
+                                    action: { messageText = "Help me study for my exam" }
                                 )
                             }
-                            if chatManager.state == .thinking {
-                                ThinkingBubble()
-                                    .id("thinking")
-                                    .transition(.opacity)
+                            .padding(.horizontal, 12)
+                        }
+                        .frame(height: 70)
+                        .background(Color.black)
+                        
+                        ChatInputBar(
+                            text: $messageText,
+                            isLoading: chatManager.state == .thinking || chatManager.state == .streaming,
+                            onSend: {
+                                let text = messageText
+                                messageText = ""
+                                Task {
+                                    await chatManager.sendMessage(text)
+                                }
                             }
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.bottom, 180)
+                        )
                     }
-                    .onChange(of: chatManager.currentConversation.messages.count) { oldValue, newValue in
-                        withAnimation {
-                            proxy.scrollTo(chatManager.currentConversation.messages.last?.id, anchor: .bottom)
-                        }
-                    }
-                    .onChange(of: chatManager.state) { oldValue, newValue in
-                        if newValue == .thinking {
-                            withAnimation {
-                                proxy.scrollTo("thinking", anchor: .bottom)
-                            }
-                        }
-                    }
+                    .background(Color.black)
+                    .offset(y: keyboardManager.isVisible ? -keyboardManager.keyboardRect.height + geometry.safeAreaInsets.bottom : 0)
                 }
-                
-                VStack(spacing: 12) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            SuggestionButton(
-                                title: "Create a painting",
-                                subtitle: "in Renaissance-style",
-                                action: { messageText = "Create a Renaissance-style painting" }
-                            )
-                            SuggestionButton(
-                                title: "Write a story",
-                                subtitle: "about an adventure",
-                                action: { messageText = "Write a story about an adventure" }
-                            )
-                            SuggestionButton(
-                                title: "Help me study",
-                                subtitle: "for my exam",
-                                action: { messageText = "Help me study for my exam" }
-                            )
-                        }
-                        .padding(.horizontal, 12)
-                    }
-                    .frame(height: 70)
-                    
-                    ChatInputBar(
-                        text: $messageText,
-                        isLoading: chatManager.state == .thinking || chatManager.state == .streaming,
-                        onSend: {
-                            let text = messageText
-                            messageText = ""
-                            Task {
-                                await chatManager.sendMessage(text)
-                            }
-                        }
-                    )
-                }
-                .background(
-                    Rectangle()
-                        .fill(Color.black)
-                        .shadow(color: .black.opacity(0.15), radius: 8, y: -4)
-                )
             }
             .navigationTitle("Jump Chat")
             .navigationBarTitleDisplayMode(.inline)
@@ -118,6 +108,10 @@ struct ContentView: View {
                             .foregroundColor(.primary)
                     }
                 }
+            }
+            .ignoresSafeArea(.keyboard)
+            .onAppear {
+                isInputFocused = true
             }
         }
         .preferredColorScheme(.dark)
