@@ -36,21 +36,16 @@ struct StreamingText: View {
             .opacity(opacity)
             .animation(.easeIn(duration: 0.15), value: opacity)
             .onChange(of: text) { _, newText in
-                if isStreaming {
-                    let isFirstToken = displayedText.isEmpty
-                    displayedText = newText
-                    opacity = 1
-                    
-                    if isFirstToken {
-                        feedbackGenerator.impactOccurred()
-                    }
+                displayedText = newText
+                opacity = 1
+                
+                if isStreaming && displayedText.isEmpty {
+                    feedbackGenerator.impactOccurred()
                 }
             }
             .onAppear {
-                if !isStreaming {
-                    displayedText = text
-                    opacity = 1
-                }
+                displayedText = text
+                opacity = 1
             }
     }
 }

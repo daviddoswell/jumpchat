@@ -2,13 +2,10 @@ import SwiftUI
 import OpenAISwift
 
 struct ContentView: View {
-    @StateObject private var chatManager: ChatStateManager = ServiceContainer.shared.stateManager
+    @ObservedObject private var chatManager = ServiceContainer.shared.stateManager
     @StateObject private var keyboardManager = KeyboardManager()
     @State private var messageText = ""
     @State private var showingSidebar = false
-    @State private var conversations: [Conversation] = []
-    
-    private let storageService: StorageService = try! LocalStorageService()
     
     var body: some View {
         NavigationStack {
@@ -38,9 +35,6 @@ struct ContentView: View {
                                 withAnimation {
                                     proxy.scrollTo(chatManager.currentConversation.messages.last?.id, anchor: .bottom)
                                 }
-                                // Save conversation when messages change
-                                try? storageService.saveConversation(chatManager.currentConversation)
-                                loadConversations()
                             }
                             .onChange(of: chatManager.state) { oldValue, newValue in
                                 if newValue == .thinking {
@@ -118,13 +112,15 @@ struct ContentView: View {
                         get: { chatManager.currentConversation },
                         set: { newConversation in
                             if let conversation = newConversation {
-                                loadConversation(conversation)
+                                chatManager.loadConversation(conversation)
                             }
                         }
                     ),
-                    conversations: conversations,
+                    conversations: chatManager.conversations.sorted(by: { $0.updatedAt > $1.updatedAt }),
                     onNewChat: startNewChat,
-                    onSelect: loadConversation
+                    onSelect: { conversation in
+                        chatManager.loadConversation(conversation)
+                    }
                 )
                 .slideTransition(isPresented: showingSidebar)
             }
@@ -149,23 +145,12 @@ struct ContentView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            loadConversations()
             // Show keyboard immediately
             UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
                                          to: nil,
                                          from: nil,
                                          for: nil)
         }
-    }
-    
-    private func loadConversations() {
-        if let conversations = try? storageService.loadAllConversations() {
-            self.conversations = conversations.sorted(by: { $0.updatedAt > $1.updatedAt })
-        }
-    }
-    
-    private func loadConversation(_ conversation: Conversation) {
-        chatManager.loadConversation(conversation)
     }
     
     private func startNewChat() {

@@ -92,8 +92,9 @@ class ChatStateManager: ObservableObject {
         currentConversation.updatedAt = Date()
         
         do {
-            // Create a placeholder for the streaming response
+            // Create a placeholder for streaming UI
             let responseId = UUID()
+            var completeResponse = ""
             currentConversation.messages.append(Message(id: responseId, content: "", isUser: false, isStreaming: true))
             
             // Start streaming
@@ -101,35 +102,36 @@ class ChatStateManager: ObservableObject {
             var isFirstToken = true
             let feedbackGenerator = UIImpactFeedbackGenerator(style: .light)
             
+            // Accumulate complete response while streaming
             for try await chunk in try await chatService.streamMessage(userMessage.content) {
                 if let index = currentConversation.messages.firstIndex(where: { $0.id == responseId }) {
                     if isFirstToken {
                         feedbackGenerator.impactOccurred()
                         isFirstToken = false
                     }
-                    // Accumulate chunks
-                    currentConversation.messages[index].content += chunk
-                    
-                    // Save periodically during streaming to prevent loss
-                    if currentConversation.messages[index].content.count % 100 == 0 {
-                        try? storageService.saveConversation(currentConversation)
-                    }
+                    completeResponse += chunk
+                    currentConversation.messages[index].content = completeResponse
                 }
             }
             
-            // Mark streaming as complete
+            // Replace streaming message with final complete message
             if let index = currentConversation.messages.firstIndex(where: { $0.id == responseId }) {
-                currentConversation.messages[index].isStreaming = false
-            }
-            
-            // Save conversation after response
-            try storageService.saveConversation(currentConversation)
-            
-            // Update conversations list
-            if let index = conversations.firstIndex(where: { $0.id == currentConversation.id }) {
-                conversations[index] = currentConversation
-            } else {
-                conversations.append(currentConversation)
+                currentConversation.messages[index] = Message(
+                    id: responseId,
+                    content: completeResponse,
+                    isUser: false,
+                    isStreaming: false
+                )
+                
+                // Save only after we have the complete message
+                try storageService.saveConversation(currentConversation)
+                
+                // Update conversations list
+                if let listIndex = conversations.firstIndex(where: { $0.id == currentConversation.id }) {
+                    conversations[listIndex] = currentConversation
+                } else {
+                    conversations.append(currentConversation)
+                }
             }
             
             state = .idle
