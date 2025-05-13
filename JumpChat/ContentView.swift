@@ -12,7 +12,6 @@ struct ContentView: View {
             ZStack(alignment: .leading) {
                 GeometryReader { geometry in
                     ZStack(alignment: .bottom) {
-                        // Chat area with tap to dismiss
                         ScrollViewReader { proxy in
                             ScrollView {
                                 LazyVStack(spacing: 12) {
@@ -21,6 +20,7 @@ struct ContentView: View {
                                             message: message.content,
                                             isUser: message.isUser
                                         )
+                                        .id(message.id) // Ensure each message has an ID for scrolling
                                     }
                                     if chatManager.state == .thinking {
                                         ThinkingBubble()
@@ -29,20 +29,28 @@ struct ContentView: View {
                                     }
                                 }
                                 .padding(.vertical, 8)
-                                .padding(.bottom, keyboardManager.isVisible ? keyboardManager.keyboardRect.height + 180 : 180)
+                                // Add bottom padding that matches input height exactly
+                                .padding(.bottom, 80)
                             }
-                            .onChange(of: chatManager.currentConversation.messages.count) { oldValue, newValue in
-                                withAnimation {
-                                    proxy.scrollTo(chatManager.currentConversation.messages.last?.id, anchor: .bottom)
-                                }
-                            }
-                            .onChange(of: chatManager.state) { oldValue, newValue in
-                                if newValue == .thinking {
+                            .onChange(of: chatManager.currentConversation.messages.count) { _, _ in
+                                // Scroll to last message with animation
+                                if let lastMessageId = chatManager.currentConversation.messages.last?.id {
                                     withAnimation {
-                                        proxy.scrollTo("thinking", anchor: .bottom)
+                                        proxy.scrollTo(lastMessageId, anchor: .bottom)
                                     }
                                 }
                             }
+                            // Scroll to bottom on appear
+                            .onAppear {
+                                if let lastMessageId = chatManager.currentConversation.messages.last?.id {
+                                    proxy.scrollTo(lastMessageId, anchor: .bottom)
+                                }
+                            }
+                        }
+                        .clipShape(Rectangle()) // Prevent content from showing behind input
+                        .safeAreaInset(edge: .bottom) {
+                            // This creates a reserved space that the scroll view won't scroll into
+                            Color.clear.frame(height: chatManager.currentConversation.messages.isEmpty ? 250 : 180)
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
