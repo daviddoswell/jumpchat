@@ -55,7 +55,7 @@ struct ContentView: View {
                     }
                     
                     // Input section
-                    VStack(spacing: 16) {
+                    VStack(spacing: 8) {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 SuggestionButton(
@@ -91,7 +91,8 @@ struct ContentView: View {
                             }
                         )
                     }
-                    .offset(y: keyboardManager.inputOffset)
+                    .ignoresSafeArea(.keyboard)
+                    .background(Color.black)
                 }
             }
             .navigationTitle("Jump Chat")

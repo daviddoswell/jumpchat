@@ -18,7 +18,7 @@ struct ChatInputBar: View {
                 if text.isEmpty {
                     Text("Ask anything")
                         .foregroundColor(.gray.opacity(0.8))
-                        .padding(.horizontal, 2)
+                        .padding(.horizontal, 4)
                 }
                 TextField("", text: $text, axis: .vertical)
                     .foregroundColor(.white)
@@ -27,7 +27,8 @@ struct ChatInputBar: View {
                     .frame(minHeight: 24)
                     .focused($isInputFocused)
             }
-            .padding(.top, 6)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
             
             // Bottom controls
             HStack(spacing: 20) {
@@ -72,15 +73,21 @@ struct ChatInputBar: View {
                     .disabled(isLoading)
                 }
             }
-            .padding(.bottom, 12)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .padding(.horizontal, keyboardVisible ? 16 : 8)
+        .frame(minHeight: 120)
         .background(Color(white: 0.17))
-        .cornerRadius(keyboardVisible ? 12 : 24, corners: keyboardVisible ? [.topLeft, .topRight] : .allCorners)
-        .frame(height: 80)
+        .clipShape(
+            RoundedCorner(
+                radius: keyboardVisible ? 12 : 24,
+                corners: keyboardVisible ? [.topLeft, .topRight] : .allCorners
+            )
+        )
+        .ignoresSafeArea()
         .frame(maxWidth: .infinity)
-        .ignoresSafeArea(.container, edges: .bottom)
         .fullScreenCover(isPresented: $showVoiceChat) {
             VoiceVisualizationView()
         }
@@ -90,17 +97,5 @@ struct ChatInputBar: View {
 extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect,
-                              byRoundingCorners: corners,
-                              cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }
