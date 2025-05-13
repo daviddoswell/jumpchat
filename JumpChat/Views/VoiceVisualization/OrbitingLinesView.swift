@@ -8,7 +8,7 @@ struct OrbitingLinesView: View {
     
     private let lineCount = 4
     private let radius: Double = 40
-    private let baseSpeed: Double = 0.5  // Increased base speed
+    private let baseSpeed: Double = 0.5
     
     var body: some View {
         TimelineView(.animation) { timelineContext in
@@ -18,15 +18,14 @@ struct OrbitingLinesView: View {
                 
                 for i in 0..<lineCount {
                     let phase = Double(i) * .pi * 2 / Double(lineCount)
-                    let speedMultiplier = state == .listening ?
+                    // Only apply audio amplitude if it's above a threshold
+                    let speedMultiplier = (state == .listening && audioAmplitude > 0.01) ?
                         (1.0 + Double(audioAmplitude) * 0.2) : 1.0
                     let speed = baseSpeed * speedMultiplier
                     
-                    // Create multiple paths with different opacities for fade effect
                     for fadeStep in 0..<8 {
-                        let fadeOffset = Double(fadeStep) * 0.15 // Spread out the fade steps
+                        let fadeOffset = Double(fadeStep) * 0.15
                         let path = Path { path in
-                            // Increased detail for smoother curves
                             for t in stride(from: 0.0, to: 2 * .pi, by: 0.05) {
                                 var point3D = orbitPoint(time: time * speed, phase: phase + fadeOffset, angle: t)
                                 
@@ -43,7 +42,6 @@ struct OrbitingLinesView: View {
                                 }
                             }
                         }
-                        // Fade each subsequent path
                         drawGlowingLine(context: context, path: path, opacity: 1.0 - (Double(fadeStep) * 0.15))
                     }
                 }
@@ -60,17 +58,14 @@ struct OrbitingLinesView: View {
     }
     
     private func orbitPoint(time: Double, phase: Double, angle: Double) -> Vector3D {
-        // Multiple wave frequencies for more organic movement
         let primaryWave = Darwin.sin(angle * 2 + time) * 0.12
         let secondaryWave = Darwin.sin(angle * 1.5 + time * 1.3) * 0.08
-        let tertiaryWave = Darwin.sin(angle * 3 + time * 0.7) * 0.05  // Added third wave
-        let quaternaryWave = Darwin.cos(angle + time * 1.8) * 0.06    // Added fourth wave
-        
-        // Combine waves with time-based variation
+        let tertiaryWave = Darwin.sin(angle * 3 + time * 0.7) * 0.05
+        let quaternaryWave = Darwin.cos(angle + time * 1.8) * 0.06
+    
         let radiusVariation = primaryWave + secondaryWave + tertiaryWave + quaternaryWave
         let orbitRadius = radius * (1 + radiusVariation)
         
-        // Add flowing motion in all dimensions
         let xFlow = Darwin.sin(time * 0.5) * 0.3
         let yFlow = Darwin.cos(time * 0.4) * 0.2
         let zFlow = Darwin.sin(time * 0.6) * 0.3
@@ -79,7 +74,6 @@ struct OrbitingLinesView: View {
         let y = orbitRadius * sin(angle + yFlow)
         let z = orbitRadius * cos(angle + zFlow) * sin(phase + time * 0.4)
         
-        // Add subtle spiraling motion
         let spiral = Darwin.sin(time * 0.3) * 0.2
         let rotationAngle = time * (baseSpeed * 0.6) + spiral
         
@@ -98,7 +92,6 @@ struct OrbitingLinesView: View {
     }
     
     private func drawGlowingLine(context: GraphicsContext, path: Path, opacity: Double) {
-        // Super soft outer glow with very low opacity
         var extremeOuterContext = context
         extremeOuterContext.addFilter(.blur(radius: 25))
         extremeOuterContext.stroke(
@@ -107,7 +100,6 @@ struct OrbitingLinesView: View {
             lineWidth: 35
         )
         
-        // Soft outer glow
         var outerContext = context
         outerContext.addFilter(.blur(radius: 20))
         outerContext.stroke(
@@ -116,7 +108,6 @@ struct OrbitingLinesView: View {
             lineWidth: 28
         )
         
-        // Middle glow
         var middleContext = context
         middleContext.addFilter(.blur(radius: 15))
         middleContext.stroke(
@@ -125,7 +116,6 @@ struct OrbitingLinesView: View {
             lineWidth: 20
         )
         
-        // Inner glow
         var innerContext = context
         innerContext.addFilter(.blur(radius: 10))
         innerContext.stroke(
@@ -134,7 +124,6 @@ struct OrbitingLinesView: View {
             lineWidth: 12
         )
         
-        // Very subtle core
         var coreContext = context
         coreContext.addFilter(.blur(radius: 3))
         coreContext.stroke(

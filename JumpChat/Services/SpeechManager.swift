@@ -23,6 +23,7 @@ final class SpeechManager: ObservableObject {
     func startVoiceChat() async throws {
         state = .listening
         provideFeedback(intensity: 0.3)
+        audioAmplitude = 0.0  // Reset amplitude to 0
         
         let config = ElevenLabsSDK.SessionConfig(agentId: Config.elevenLabsAgentId)
         let callbacks = createCallbacks()
@@ -45,6 +46,7 @@ final class SpeechManager: ObservableObject {
             conversation?.endSession()
             sessionTimer?.invalidate()
             audioLevelTimer?.invalidate()
+            audioAmplitude = 0.0  // Reset amplitude to 0
             state = .idle
             provideFeedback(intensity: 0.6)
         }
@@ -76,6 +78,7 @@ final class SpeechManager: ObservableObject {
                 switch mode {
                 case .listening:
                     self?.state = .listening
+                    self?.audioAmplitude = 0.0  // Reset amplitude on mode change
                     self?.provideFeedback(intensity: 0.2)
                 case .speaking:
                     self?.state = .responding
@@ -104,11 +107,15 @@ final class SpeechManager: ObservableObject {
         audioLevelTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                // Simulate smooth audio level changes
-                let targetAmplitude: Float = self.state == .responding ? 0.7 : 0.3
-                let currentAmplitude = self.audioAmplitude
-                let newAmplitude = currentAmplitude + (targetAmplitude - currentAmplitude) * 0.2
-                self.audioAmplitude = newAmplitude + Float.random(in: -0.1...0.1)
+                // For responding state, use smooth animation
+                if self.state == .responding {
+                    let targetAmplitude: Float = 0.7
+                    let currentAmplitude = self.audioAmplitude
+                    let newAmplitude = currentAmplitude + (targetAmplitude - currentAmplitude) * 0.2
+                    self.audioAmplitude = newAmplitude + Float.random(in: -0.1...0.1)
+                }
+                // For listening state, we should get actual audio levels from ElevenLabs
+                // For now, keep amplitude at 0 until we get real voice input
             }
         }
     }
