@@ -12,12 +12,6 @@ struct ContentView: View {
             GeometryReader { geometry in
                 ZStack(alignment: .bottom) {
                     // Tap gesture to dismiss keyboard
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            keyboardManager.hideKeyboard()
-                        }
-                    
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(spacing: 12) {
@@ -49,8 +43,12 @@ struct ContentView: View {
                             }
                         }
                     }
+                    .contentShape(Rectangle()) // Make sure entire scroll area is tappable
+                    .onTapGesture {
+                        keyboardManager.hideKeyboard()
+                    }
                     
-                    VStack(spacing: 16) { 
+                    VStack(spacing: 16) {
                         // Suggestions scroll view
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
