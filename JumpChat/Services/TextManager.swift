@@ -17,7 +17,37 @@ final class TextManager: ObservableObject {
         try session.setActive(true)
     }
 
+    private func fetchVoices() async {
+        do {
+            guard let url = URL(string: "\(baseURL)/voices") else { return }
+            
+            var request = URLRequest(url: url)
+            request.setValue(Config.elevenLabsApiKey.trimmingCharacters(in: .whitespacesAndNewlines),
+                           forHTTPHeaderField: "xi-api-key")
+            
+            let (data, _) = try await URLSession.shared.data(for: request)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            
+            if let voices = json?["voices"] as? [[String: Any]] {
+                print("\nAvailable Voices:")
+                print("----------------")
+                for voice in voices {
+                    let name = voice["name"] as? String ?? "Unknown"
+                    let id = voice["voice_id"] as? String ?? "Unknown"
+                    print("Name: \(name)")
+                    print("ID: \(id)")
+                    print("----------------")
+                }
+            }
+        } catch {
+            print("Failed to fetch voices: \(error.localizedDescription)")
+        }
+    }
+    
     func synthesizeAndPlay(_ text: String) async {
+        // First fetch available voices
+        await fetchVoices()
+        
         guard !isSynthesizing else { return }
         isSynthesizing = true
 
@@ -37,10 +67,13 @@ final class TextManager: ObservableObject {
 
             let parameters: [String: Any] = [
                 "text": text,
-                "model_id": "eleven_multilingual_v2",
+                "model_id": "eleven_monolingual_v1", // Changed to faster model
                 "voice_settings": [
-                    "stability": 0.5,
-                    "similarity_boost": 0.75
+                    "stability": 0.45,         // Lowered for faster, more natural speech
+                    "similarity_boost": 0.75,   // Balanced for Archer's voice
+                    "style": 0.25,             // Reduced for more consistent pacing
+                    "use_speaker_boost": true,
+                    "speaking_rate": 1.2       // Added: Slightly faster speech rate
                 ]
             ]
 
