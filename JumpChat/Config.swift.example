@@ -1,5 +1,7 @@
 /// Configuration for JumpChat
+
 /// Copy this file to Config.swift and fill in your API keys
+
 struct Config {
     // MARK: - OpenAI Configuration
     
@@ -45,7 +47,5 @@ struct Config {
  3. Create Config.swift:
     - Copy this file and rename it to Config.swift
     - Replace all placeholder values with your actual API keys
-    - Keep Config.swift in your .gitignore (already done)
- 
- Note: Never commit Config.swift with real API keys to version control!
+    - Keep Config.swift in your .gitignore (already done) 
 */

@@ -20,7 +20,7 @@ struct ResponseParser {
             var processedText = ""
             var inList = false
             
-            for (index, line) in lines.enumerated() {
+            for line in lines {
                 let trimmedLine = line.trimmingCharacters(in: .whitespaces)
                 
                 // Handle section titles (e.g., "Pros of Using Sunscreen:")
