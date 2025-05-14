@@ -1,4 +1,3 @@
-
 # Xcode
 ##
 *.xcodeproj/*
@@ -16,7 +15,8 @@ Packages/
 Package.resolved
 
 # Config files
-Config.swift
+**/Config.swift
+!**/Config.swift.example
 *.plist
 
 # OS X temporary files
