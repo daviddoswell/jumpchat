@@ -4,6 +4,7 @@ import AVFoundation
 struct MessageBubble: View {
     let message: Message
     @State private var showCopyAlert = false
+    @State private var showFeedbackAlert = false
     @StateObject private var textManager = ServiceContainer.shared.textManager
     @ObservedObject private var chatManager = ServiceContainer.shared.stateManager
 
@@ -67,6 +68,15 @@ struct MessageBubble: View {
                         // Thumbs up button
                         Button(action: {
                             chatManager.rateMessage(message, rating: .thumbsUp)
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showFeedbackAlert = true
+                            }
+                            // Hide after delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    showFeedbackAlert = false
+                                }
+                            }
                         }) {
                             Image(systemName: message.rating == .thumbsUp ? "hand.thumbsup.fill" : "hand.thumbsup")
                                 .font(.system(size: 18))
@@ -76,6 +86,15 @@ struct MessageBubble: View {
                         // Thumbs down button
                         Button(action: {
                             chatManager.rateMessage(message, rating: .thumbsDown)
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showFeedbackAlert = true
+                            }
+                            // Hide after delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    showFeedbackAlert = false
+                                }
+                            }
                         }) {
                             Image(systemName: message.rating == .thumbsDown ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                                 .font(.system(size: 18))
@@ -102,6 +121,24 @@ struct MessageBubble: View {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .bold))
                         Text("Message copied")
+                            .font(.system(size: 15))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color(white: 0.2))
+                    .cornerRadius(8)
+                }
+                .frame(maxWidth: .infinity, alignment: .top)
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            if showFeedbackAlert {
+                VStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Thank you for your feedback")
                             .font(.system(size: 15))
                     }
                     .foregroundColor(.white)
