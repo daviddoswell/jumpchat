@@ -1,10 +1,12 @@
 import SwiftUI
+import AVFoundation
 
 struct MessageBubble: View {
     let message: String
     let isUser: Bool
     @State private var showCopyAlert = false
-    
+    @StateObject private var textManager = ServiceContainer.shared.textManager
+
     var body: some View {
         HStack {
             if isUser {
@@ -40,10 +42,26 @@ struct MessageBubble: View {
                             Image(systemName: "doc.on.doc")
                                 .font(.system(size: 18))
                         }
-                        Button(action: {}) {
-                            Image(systemName: "speaker.wave.2")
-                                .font(.system(size: 18))
+                        // Text-to-speech button
+                        Button(action: {
+                            if textManager.isPlaying {
+                                textManager.stop()
+                            } else {
+                                Task {
+                                    await textManager.synthesizeAndPlay(message)
+                                }
+                            }
+                        }) {
+                            if textManager.isSynthesizing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: Color(.systemGray)))
+                                    .frame(width: 18, height: 18)
+                            } else {
+                                Image(systemName: textManager.isPlaying ? "speaker.wave.2.fill" : "speaker.wave.2")
+                                    .font(.system(size: 18))
+                            }
                         }
+                        .disabled(textManager.isSynthesizing)
                         Button(action: {}) {
                             Image(systemName: "hand.thumbsup")
                                 .font(.system(size: 18))
@@ -68,7 +86,7 @@ struct MessageBubble: View {
             if showCopyAlert {
                 VStack {
                     HStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle.fill")
+                        Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .bold))
                         Text("Message copied")
                             .font(.system(size: 15))
@@ -84,5 +102,19 @@ struct MessageBubble: View {
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
+    }
+}
+
+// Helper class to handle audio player delegate
+private class AVPlayerDelegate: NSObject, AVAudioPlayerDelegate {
+    @Binding var isPlaying: Bool
+    
+    init(isPlaying: Binding<Bool>) {
+        _isPlaying = isPlaying
+        super.init()
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        isPlaying = false
     }
 }

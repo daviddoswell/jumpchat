@@ -7,6 +7,7 @@ class ServiceContainer {
     
     let chatService: ChatService
     let storageService: StorageService
+    let textManager = TextManager()
     
     lazy var stateManager: ChatStateManager = {
         ChatStateManager(chatService: self.chatService, storageService: self.storageService)
