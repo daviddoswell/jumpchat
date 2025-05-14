@@ -37,12 +37,6 @@ struct ChatInputBar: View {
                 Spacer()
                 
                 if text.isEmpty {
-                    Button(action: {}) {
-                        Image(systemName: "microphone")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    
                     Button {
                         Task {
                             let hasPermission = await permissionsManager.requestMicrophoneAccess()
@@ -62,7 +56,7 @@ struct ChatInputBar: View {
                 } else {
                     Button(action: onSend) {
                         Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
                     .disabled(isLoading)

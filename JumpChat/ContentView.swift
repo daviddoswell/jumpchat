@@ -46,6 +46,8 @@ struct ContentView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            prepareHaptics()
+            
             UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
                                           to: nil,
                                           from: nil,
@@ -69,7 +71,6 @@ struct ContentView: View {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
                 showingSidebar.toggle()
             }
-            prepareHaptics()
             complexHaptic()
         }) {
             Image(systemName: showingSidebar ? "xmark" : "list.dash")
@@ -88,10 +89,15 @@ struct ContentView: View {
     
     private func sendMessage() {
         let text = messageText
+        let feedbackGenerator = UIImpactFeedbackGenerator(style: .light)
+        feedbackGenerator.prepare()
+        
         messageText = ""
+        
         Task {
             await chatManager.sendMessage(text)
         }
+        feedbackGenerator.impactOccurred()
     }
     
     private func startNewChat() {
