@@ -4,7 +4,7 @@ import Combine
 class KeyboardManager: ObservableObject {
     @Published private(set) var keyboardRect: CGRect = .zero
     @Published private(set) var isVisible = false
-    @Published private(set) var inputOffset: CGFloat = -34  // Revert to -34 for better nestling
+    @Published private(set) var inputOffset: CGFloat = -34
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -23,7 +23,7 @@ class KeyboardManager: ObservableObject {
                 withAnimation(.easeOut(duration: duration)) {
                     self.keyboardRect = rect
                     self.isVisible = true
-                    self.inputOffset = 0  // Base position with keyboard
+                    self.inputOffset = 0
                 }
             }
             .store(in: &cancellables)

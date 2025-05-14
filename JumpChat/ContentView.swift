@@ -129,6 +129,7 @@ private struct ChatContentView: View {
     let onDeleteConversation: (Conversation) -> Void
     let currentConversation: Conversation
     let conversations: [Conversation]
+    @StateObject private var keyboardManager = KeyboardManager()
     
     var body: some View {
         ZStack(alignment: .leading) {
@@ -146,10 +147,7 @@ private struct ChatContentView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                     to: nil,
-                                                     from: nil,
-                                                     for: nil)
+                        keyboardManager.hideKeyboard()
                     }
                 }
                 
@@ -184,7 +182,6 @@ private struct ChatContentView: View {
             )
             .slideTransition(isPresented: showingSidebar)
         }
-        .ignoresSafeArea(.keyboard)
     }
     
     private var messagesList: some View {
