@@ -68,7 +68,7 @@ struct MessageBubble: View {
             if showCopyAlert {
                 VStack {
                     HStack(spacing: 8) {
-                        Image(systemName: "xmark")
+                        Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 14, weight: .bold))
                         Text("Message copied")
                             .font(.system(size: 15))

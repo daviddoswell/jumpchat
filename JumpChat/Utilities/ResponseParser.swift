@@ -3,12 +3,10 @@ import SwiftUI
 struct ResponseParser {
     static func parse(_ text: String) -> AttributedString {
         do {
-            // Configure markdown parsing options
             let options = AttributedString.MarkdownParsingOptions(
                 interpretedSyntax: .inlineOnlyPreservingWhitespace
             )
             
-            // Create attributed string from markdown
             var result = try AttributedString(markdown: text, options: options)
             
             // Apply base style
@@ -19,49 +17,63 @@ struct ResponseParser {
             
             // Apply styles to markdown elements
             let lines = text.components(separatedBy: .newlines)
+            var processedText = ""
+            var inList = false
+            
             for (index, line) in lines.enumerated() {
-                guard let lineRange = result.range(of: line) else { continue }
+                let trimmedLine = line.trimmingCharacters(in: .whitespaces)
                 
-                // Headers (##)
-                if line.hasPrefix("##") {
+                // Handle section titles (e.g., "Pros of Using Sunscreen:")
+                if trimmedLine.hasSuffix(":") && !trimmedLine.hasPrefix("-") {
+                    if inList { processedText += "\n" }
+                    processedText += "\n\(line)\n"
+                    inList = false
+                    continue
+                }
+                
+                // Handle list items
+                if trimmedLine.hasPrefix("-") || trimmedLine.hasPrefix("•") {
+                    if !inList && !processedText.isEmpty { processedText += "\n" }
+                    processedText += "\(line)\n"
+                    inList = true
+                    continue
+                }
+                
+                // Handle regular paragraphs
+                if !trimmedLine.isEmpty {
+                    if inList { processedText += "\n" }
+                    processedText += "\(line)\n"
+                    inList = false
+                }
+            }
+            
+            // Create final attributed string
+            result = try AttributedString(markdown: processedText, options: options)
+            result.mergeAttributes(baseAttributes)
+            
+            // Apply specific styles
+            let sections = processedText.components(separatedBy: .newlines)
+            for section in sections {
+                guard let sectionRange = result.range(of: section) else { continue }
+                
+                // Style section headers
+                if section.hasSuffix(":") && !section.hasPrefix("-") {
                     var headerAttributes = AttributeContainer()
-                    headerAttributes.font = .system(size: 18, weight: .bold)
-                    headerAttributes.foregroundColor = .white
-                    result[lineRange].mergeAttributes(headerAttributes)
+                    headerAttributes.font = .system(size: 16, weight: .bold)
+                    result[sectionRange].mergeAttributes(headerAttributes)
                 }
                 
-                // Lists
-                if line.hasPrefix("- ") || line.hasPrefix("• ") {
-                    // Add proper indentation
-                    if !line.hasPrefix("  ") {
-                        result.characters.insert(contentsOf: "  ", at: lineRange.lowerBound)
-                    }
-                }
-                
-                // Add paragraph spacing
-                if index < lines.count - 1 {
-                    let nextLine = lines[index + 1]
-                    let shouldAddSpace = !line.isEmpty &&
-                                      !nextLine.isEmpty &&
-                                      (line.hasSuffix(".") ||
-                                       line.hasSuffix(":") ||
-                                       line.hasSuffix("?") ||
-                                       nextLine.hasPrefix("##") ||
-                                       nextLine.hasPrefix("-") ||
-                                       nextLine.hasPrefix("•"))
-                    
-                    if shouldAddSpace {
-                        if let endOfLine = result.range(of: line)?.upperBound {
-                            result.characters.insert(contentsOf: "\n", at: endOfLine)
-                        }
-                    }
+                // Style list items
+                if section.hasPrefix("-") || section.hasPrefix("•") {
+                    var listAttributes = AttributeContainer()
+                    listAttributes.font = .system(size: 16)
+                    result[sectionRange].mergeAttributes(listAttributes)
                 }
             }
             
             return result
             
         } catch {
-            // Fallback if markdown parsing fails
             var result = AttributedString(text)
             var attributes = AttributeContainer()
             attributes.font = .system(size: 16)
