@@ -10,7 +10,7 @@ struct SuggestionButton: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .fontWeight(.medium)
-                    .font(.system(size: 15))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .lineLimit(1)
                 
@@ -21,13 +21,9 @@ struct SuggestionButton: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(Color(white: 0.17))
+            .background(Color.gray.opacity(0.15))
             .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(white: 0.3), lineWidth: 0.5)
-            )
-        }
+          }
         .buttonStyle(.plain)
     }
 }
