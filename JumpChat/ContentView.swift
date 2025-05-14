@@ -2,204 +2,238 @@ import SwiftUI
 import CoreHaptics
 
 struct ContentView: View {
-  @ObservedObject private var chatManager = ServiceContainer.shared.stateManager
-  @StateObject private var keyboardManager = KeyboardManager()
-  @State private var messageText = ""
-  @State private var showingSidebar = false
-  @State private var engine: CHHapticEngine?
-
-  var body: some View {
-    NavigationStack {
-      ZStack(alignment: .leading) {
-        GeometryReader { geometry in
-          ZStack(alignment: .bottom) {
-            ScrollViewReader { proxy in
-              ScrollView {
-                LazyVStack(spacing: 12) {
-                  ForEach(chatManager.currentConversation.messages) { message in
-                    MessageBubble(message: message)
-                      .id(message.id)
-                  }
-                  if chatManager.state == .thinking {
-                    ThinkingBubble()
-                      .id("thinking")
-                      .transition(.opacity)
-                  }
-                }
-                .padding(.vertical, 8)
-                .padding(.bottom, 80)
-              }
-              .onChange(of: chatManager.currentConversation.messages.count) { _, _ in
-                if let lastMessageId = chatManager.currentConversation.messages.last?.id {
-                  withAnimation {
-                    proxy.scrollTo(lastMessageId, anchor: .bottom)
-                  }
-                }
-              }
-              .onAppear {
-                if let lastMessageId = chatManager.currentConversation.messages.last?.id {
-                  proxy.scrollTo(lastMessageId, anchor: .bottom)
-                }
-              }
-            }
-            .clipShape(Rectangle())
-            .safeAreaInset(edge: .bottom) {
-              Color.clear.frame(height: chatManager.currentConversation.messages.isEmpty ? 250 : 180)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-              keyboardManager.hideKeyboard()
-              if showingSidebar {
-                showingSidebar = false
-              }
-            }
-            
-            VStack(spacing: 8) {
-              if chatManager.currentConversation.messages.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                  HStack(spacing: 8) {
-                    SuggestionButton(
-                      title: "Portfolio analysis",
-                      subtitle: "review my investments",
-                      action: { messageText = "Can you analyze my current investment portfolio and suggest optimizations?" }
-                    )
-                    SuggestionButton(
-                      title: "Tax strategies",
-                      subtitle: "minimize tax liability",
-                      action: { messageText = "What tax optimization strategies would you recommend for high-net-worth individuals?" }
-                    )
-                    SuggestionButton(
-                      title: "Estate planning",
-                      subtitle: "wealth transfer options",
-                      action: { messageText = "Help me understand the best options for transferring wealth to my heirs efficiently" }
-                    )
-                  }
-                  .padding(.horizontal, 12)
-                }
-                .frame(height: 70)
-              }
-              
-              ChatInputBar(
-                keyboardVisible: keyboardManager.isVisible,
-                text: $messageText,
+    @ObservedObject private var chatManager = ServiceContainer.shared.stateManager
+    @State private var messageText = ""
+    @State private var showingSidebar = false
+    @State private var engine: CHHapticEngine?
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var inputFocused: Bool
+    
+    var body: some View {
+        NavigationStack {
+            ChatContentView(
+                messages: chatManager.currentConversation.messages,
+                isThinking: chatManager.state == .thinking,
+                messageText: $messageText,
+                showingSidebar: $showingSidebar,
                 isLoading: chatManager.state == .thinking || chatManager.state == .streaming,
-                onSend: {
-                  let text = messageText
-                  messageText = ""
-                  Task {
-                    await chatManager.sendMessage(text)
-                  }
+                onSend: sendMessage,
+                onNewChat: startNewChat,
+                onSelectConversation: { conversation in
+                    chatManager.loadConversation(conversation)
+                },
+                onDeleteConversation: { conversation in
+                    chatManager.deleteConversation(conversation)
+                },
+                currentConversation: chatManager.currentConversation,
+                conversations: chatManager.conversations.sorted(by: { $0.updatedAt > $1.updatedAt })
+            )
+            .navigationTitle("Jump Chat")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    sidebarButton
                 }
-              )
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    newChatButton
+                }
             }
-            .offset(y: keyboardManager.inputOffset)
-          }
         }
-        
-        if showingSidebar {
-          Color.black.opacity(0.4)
-            .ignoresSafeArea()
-            .onTapGesture {
-              withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                showingSidebar = false
-              }
-            }
-            .transition(.opacity)
+        .preferredColorScheme(.dark)
+        .onAppear {
+            UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
+                                          to: nil,
+                                          from: nil,
+                                          for: nil)
         }
-        
-        ConversationSidebar(
-          isPresented: $showingSidebar,
-          selectedConversation: Binding(
-            get: { chatManager.currentConversation },
-            set: { newConversation in
-              if let conversation = newConversation {
-                chatManager.loadConversation(conversation)
-              }
-            }
-          ),
-          conversations: chatManager.conversations.sorted(by: { $0.updatedAt > $1.updatedAt }),
-          onNewChat: startNewChat,
-          onSelect: { conversation in
-            chatManager.loadConversation(conversation)
-          },
-          onDelete: { conversation in
-            chatManager.deleteConversation(conversation)
-          }
-        )
-        .slideTransition(isPresented: showingSidebar)
-      }
-      .navigationTitle("Jump Chat")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbarBackground(.visible, for: .navigationBar)
-      .toolbarBackground(Color.black, for: .navigationBar)
-      .toolbar {
-        ToolbarItem(placement: .navigationBarLeading) {
-          Button(action: {
+    }
+    
+    private var sidebarButton: some View {
+        Button(action: {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-              showingSidebar.toggle()
+                showingSidebar.toggle()
             }
             prepareHaptics()
             complexHaptic()
-          }) {
+        }) {
             Image(systemName: showingSidebar ? "xmark" : "list.dash")
-              .font(.system(size: 16, weight: .bold, design: .rounded))
-              .foregroundColor(.primary)
-          }
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
         }
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button(action: startNewChat) {
+    }
+    
+    private var newChatButton: some View {
+        Button(action: startNewChat) {
             Image(systemName: "square.and.pencil")
-              .font(.system(size: 16, weight: .bold, design: .rounded))
-              .foregroundColor(.primary)
-          }
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
         }
-      }
     }
-    .preferredColorScheme(.dark)
-    .onAppear {
-      UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
-                                      to: nil,
-                                      from: nil,
-                                      for: nil)
+    
+    private func sendMessage() {
+        let text = messageText
+        messageText = ""
+        Task {
+            await chatManager.sendMessage(text)
+        }
     }
-  }
-  
-  private func startNewChat() {
-    chatManager.startNewConversation()
-    messageText = ""
-  }
-  
-  func prepareHaptics() {
-    guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
     
-    do {
-      engine = try CHHapticEngine()
-      try engine?.start()
-    } catch {
-      print("There was an error creating the engine: \(error.localizedDescription)")
+    private func startNewChat() {
+        chatManager.startNewConversation()
+        messageText = ""
     }
-  }
-  
-  func complexHaptic() {
-    guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
     
-    var events = [CHHapticEvent]()
-    
-    let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.75)
-    let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
-    let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 0)
-    events.append(event)
-    
-    do {
-      let pattern = try CHHapticPattern(events: events, parameters: [])
-      let player = try engine?.makePlayer(with: pattern)
-      try player?.start(atTime: 0)
-    } catch {
-      print("Failed to play pattern: \(error.localizedDescription)")
+    func prepareHaptics() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        
+        do {
+            engine = try CHHapticEngine()
+            try engine?.start()
+        } catch {
+            print("There was an error creating the engine: \(error.localizedDescription)")
+        }
     }
-  }
+    
+    func complexHaptic() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics,
+              let engine = engine else { return }
+        
+        var events = [CHHapticEvent]()
+        
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.75)
+        let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+        let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 0)
+        events.append(event)
+        
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {
+            print("Failed to play pattern: \(error.localizedDescription)")
+        }
+    }
+}
+
+private struct ChatContentView: View {
+    let messages: [Message]
+    let isThinking: Bool
+    @Binding var messageText: String
+    @Binding var showingSidebar: Bool
+    let isLoading: Bool
+    let onSend: () -> Void
+    let onNewChat: () -> Void
+    let onSelectConversation: (Conversation) -> Void
+    let onDeleteConversation: (Conversation) -> Void
+    let currentConversation: Conversation
+    let conversations: [Conversation]
+    
+    var body: some View {
+        ZStack(alignment: .leading) {
+            VStack(spacing: 0) {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        messagesList
+                            .padding(.vertical, 8)
+                    }
+                    .onAppear {
+                        scrollToBottom(proxy: proxy)
+                    }
+                    .onChange(of: messages.count) { _, _ in
+                        scrollToBottom(proxy: proxy)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                     to: nil,
+                                                     from: nil,
+                                                     for: nil)
+                    }
+                }
+                
+                VStack(spacing: 0) {
+                    if messages.isEmpty {
+                        suggestionButtons
+                    }
+                    
+                    ChatInputBar(
+                        text: $messageText,
+                        isLoading: isLoading,
+                        onSend: onSend
+                    )
+                }
+                .background(Color.black)
+            }
+            
+            ConversationSidebar(
+                isPresented: $showingSidebar,
+                selectedConversation: Binding(
+                    get: { currentConversation },
+                    set: { newConversation in
+                        if let conversation = newConversation {
+                            onSelectConversation(conversation)
+                        }
+                    }
+                ),
+                conversations: conversations,
+                onNewChat: onNewChat,
+                onSelect: onSelectConversation,
+                onDelete: onDeleteConversation
+            )
+            .slideTransition(isPresented: showingSidebar)
+        }
+        .ignoresSafeArea(.keyboard)
+    }
+    
+    private var messagesList: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(messages) { message in
+                MessageBubble(message: message)
+                    .id(message.id)
+            }
+            if isThinking {
+                ThinkingBubble()
+                    .id("thinking")
+                    .transition(.opacity)
+            }
+        }
+    }
+    
+    private var suggestionButtons: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                SuggestionButton(
+                    title: "Portfolio analysis",
+                    subtitle: "review my investments",
+                    action: { messageText = "Can you analyze my current investment portfolio and suggest optimizations?" }
+                )
+                SuggestionButton(
+                    title: "Tax strategies",
+                    subtitle: "minimize tax liability",
+                    action: { messageText = "What tax optimization strategies would you recommend for high-net-worth individuals?" }
+                )
+                SuggestionButton(
+                    title: "Estate planning",
+                    subtitle: "wealth transfer options",
+                    action: { messageText = "Help me understand the best options for transferring wealth to my heirs efficiently" }
+                )
+            }
+            .padding(.horizontal, 12)
+        }
+        .frame(height: 70)
+    }
+    
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        if let lastId = messages.last?.id {
+            withAnimation(.easeOut(duration: 0.2)) {
+                proxy.scrollTo(lastId, anchor: .bottom)
+            }
+        }
+    }
 }
 
 #Preview {
-  ContentView()
+    ContentView()
 }

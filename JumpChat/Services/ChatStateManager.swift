@@ -166,9 +166,13 @@ class ChatStateManager: ObservableObject {
     }
     
     func loadConversation(_ conversation: Conversation) {
-        self.currentConversation = conversation
-        state = .idle
-        
+        withAnimation {
+            currentConversation = conversation
+            // Delay state update to allow view transition
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.state = .idle
+            }
+        }
         // Save as last active
         do {
             try storageService.saveLastActiveConversation(id: conversation.id)

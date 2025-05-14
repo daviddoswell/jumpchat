@@ -2,7 +2,6 @@ import SwiftUI
 import UIKit
 
 struct ChatInputBar: View {
-  let keyboardVisible: Bool
   @Binding var text: String
   let isLoading: Bool
   let onSend: () -> Void
@@ -72,16 +71,8 @@ struct ChatInputBar: View {
       VoiceVisualizationView()
     }
     .onTapGesture {
-      if !keyboardVisible {
+      if !isInputFocused {
         isInputFocused = true
-      }
-    }
-    .overlay {
-      if keyboardVisible {
-        Color.black.opacity(0.001)
-          .onTapGesture {
-            isInputFocused = false
-          }
       }
     }
   }
