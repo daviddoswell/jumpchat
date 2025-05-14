@@ -1,0 +1,51 @@
+b9ee689c07e4d27e7e483a15b567cb3f3b1f67b6	not-for-merge	branch 'angelo/add_dynamic_variables' of https://github.com/elevenlabs/ElevenLabsSwift
+4201ea43781972adf976e427a4b977c9ef67707f	not-for-merge	branch 'angelo/fix-end-session' of https://github.com/elevenlabs/ElevenLabsSwift
+647d4c12ec1b859ae39041b330e840fabbcddcf4	not-for-merge	branch 'angelo/fix-maximum-web-socket' of https://github.com/elevenlabs/ElevenLabsSwift
+2f1d8268736a640eeaeedcd6ea915b6fa4ef70be	not-for-merge	branch 'chore/make-callbacks-sendable' of https://github.com/elevenlabs/ElevenLabsSwift
+312d0c1cdef01635b8a4da98d8f6b9584b439ec5	not-for-merge	branch 'feat/add-client-tools' of https://github.com/elevenlabs/ElevenLabsSwift
+736de3cb386e71f22497adeb96081334ffc7d005	not-for-merge	branch 'feat/add-ext-volume-control' of https://github.com/elevenlabs/ElevenLabsSwift
+1f0b9f129a5b310188ac4c3a318a5e28c9a576cf	not-for-merge	branch 'feat/add-format-wflow' of https://github.com/elevenlabs/ElevenLabsSwift
+e3d91eb9987bba877cd5fedf1874cb9737b66db9	not-for-merge	branch 'feat/add-support-for-agent-overrides' of https://github.com/elevenlabs/ElevenLabsSwift
+f9620622abc509c1a8e45e268ccad7b45f0f8a0f	not-for-merge	branch 'feat/attempt-echo-cancellation' of https://github.com/elevenlabs/ElevenLabsSwift
+af98c546ee311c4a244859e5eed3007a96e0957d	not-for-merge	branch 'feat/improvements' of https://github.com/elevenlabs/ElevenLabsSwift
+95debac9d98126337e2af9d1d32d75bbfcd5ad94	not-for-merge	branch 'feat/mac-os-support-branch' of https://github.com/elevenlabs/ElevenLabsSwift
+574e7127e115535d8ef72fb49b941688ed7048c0	not-for-merge	branch 'feat/make-cocoapods-compatible' of https://github.com/elevenlabs/ElevenLabsSwift
+9d7711a701eefdf06c8f715b37d5a609cf24a247	not-for-merge	branch 'feat/update-sdk' of https://github.com/elevenlabs/ElevenLabsSwift
+00c0e3f538e98683528d6c7119dae12b4859f76e	not-for-merge	branch 'fix/echo' of https://github.com/elevenlabs/ElevenLabsSwift
+dd7937d7783f50d2bd4661063974eb6c6099ccaa	not-for-merge	branch 'fix/max-limit' of https://github.com/elevenlabs/ElevenLabsSwift
+f53344e115db62a71ce1774223f3d621037702be	not-for-merge	branch 'louisjoecodes-patch-1' of https://github.com/elevenlabs/ElevenLabsSwift
+73588d629f33352dd74408b97e53d649643fb698	not-for-merge	branch 'main' of https://github.com/elevenlabs/ElevenLabsSwift
+e1db1f744e7e813699888f644f718092fcb36c12	not-for-merge	branch 'older-iphone-support' of https://github.com/elevenlabs/ElevenLabsSwift
+af98c546ee311c4a244859e5eed3007a96e0957d	not-for-merge	'refs/pull/1/head' of https://github.com/elevenlabs/ElevenLabsSwift
+b9ee689c07e4d27e7e483a15b567cb3f3b1f67b6	not-for-merge	'refs/pull/10/head' of https://github.com/elevenlabs/ElevenLabsSwift
+84957f137cf4d471b9c7cb393e4bba70a7fef40e	not-for-merge	'refs/pull/11/head' of https://github.com/elevenlabs/ElevenLabsSwift
+4201ea43781972adf976e427a4b977c9ef67707f	not-for-merge	'refs/pull/14/head' of https://github.com/elevenlabs/ElevenLabsSwift
+3411e70dd0f275cd38c321555b4aae7d9fb8b333	not-for-merge	'refs/pull/18/head' of https://github.com/elevenlabs/ElevenLabsSwift
+2f1d8268736a640eeaeedcd6ea915b6fa4ef70be	not-for-merge	'refs/pull/2/head' of https://github.com/elevenlabs/ElevenLabsSwift
+d98af709d26fb6a5bc347d0b0b89c874990ad39a	not-for-merge	'refs/pull/22/head' of https://github.com/elevenlabs/ElevenLabsSwift
+bf3e30650aaff5bcc8e4a2d96c1fff4e2c2594af	not-for-merge	'refs/pull/25/head' of https://github.com/elevenlabs/ElevenLabsSwift
+647d4c12ec1b859ae39041b330e840fabbcddcf4	not-for-merge	'refs/pull/27/head' of https://github.com/elevenlabs/ElevenLabsSwift
+736de3cb386e71f22497adeb96081334ffc7d005	not-for-merge	'refs/pull/29/head' of https://github.com/elevenlabs/ElevenLabsSwift
+1f0b9f129a5b310188ac4c3a318a5e28c9a576cf	not-for-merge	'refs/pull/3/head' of https://github.com/elevenlabs/ElevenLabsSwift
+f53344e115db62a71ce1774223f3d621037702be	not-for-merge	'refs/pull/30/head' of https://github.com/elevenlabs/ElevenLabsSwift
+dd7937d7783f50d2bd4661063974eb6c6099ccaa	not-for-merge	'refs/pull/33/head' of https://github.com/elevenlabs/ElevenLabsSwift
+e1db1f744e7e813699888f644f718092fcb36c12	not-for-merge	'refs/pull/37/head' of https://github.com/elevenlabs/ElevenLabsSwift
+00c0e3f538e98683528d6c7119dae12b4859f76e	not-for-merge	'refs/pull/4/head' of https://github.com/elevenlabs/ElevenLabsSwift
+9d7711a701eefdf06c8f715b37d5a609cf24a247	not-for-merge	'refs/pull/5/head' of https://github.com/elevenlabs/ElevenLabsSwift
+e3d91eb9987bba877cd5fedf1874cb9737b66db9	not-for-merge	'refs/pull/6/head' of https://github.com/elevenlabs/ElevenLabsSwift
+312d0c1cdef01635b8a4da98d8f6b9584b439ec5	not-for-merge	'refs/pull/7/head' of https://github.com/elevenlabs/ElevenLabsSwift
+1375554c75d4e1cf6d822256abd781a23da56092	not-for-merge	tag 'v1.0.0' of https://github.com/elevenlabs/ElevenLabsSwift
+322625a58f08f0d835eeda40ed7c4d5f1eefb9a6	not-for-merge	tag 'v1.0.1' of https://github.com/elevenlabs/ElevenLabsSwift
+cb7b371863233104f2a1bdfb922b63ad635db68e	not-for-merge	tag 'v1.0.2' of https://github.com/elevenlabs/ElevenLabsSwift
+ebe9b1738b68c816d71094ddcd4d9f05dea0437e	not-for-merge	tag 'v1.0.3' of https://github.com/elevenlabs/ElevenLabsSwift
+dd2a0b226f541ff1be69aefb1230709a8f122858	not-for-merge	tag 'v1.0.4' of https://github.com/elevenlabs/ElevenLabsSwift
+66716f808c138cdd2e67280342af94b26ac7e6b8	not-for-merge	tag 'v1.0.5' of https://github.com/elevenlabs/ElevenLabsSwift
+66716f808c138cdd2e67280342af94b26ac7e6b8	not-for-merge	tag 'v1.0.6' of https://github.com/elevenlabs/ElevenLabsSwift
+4b80ebd938385d956c052e58e7daaed4b822c20a	not-for-merge	tag 'v1.0.7' of https://github.com/elevenlabs/ElevenLabsSwift
+c74ac7d74eb4a542aa9687a665fc47bfa481d543	not-for-merge	tag 'v1.0.8' of https://github.com/elevenlabs/ElevenLabsSwift
+5cc46b61392641b96572629a9e6281745c2a92e2	not-for-merge	tag 'v1.0.9' of https://github.com/elevenlabs/ElevenLabsSwift
+84471ed2981bc1b4ad8c503ed56fd6a0a2b0979e	not-for-merge	tag 'v1.1.0' of https://github.com/elevenlabs/ElevenLabsSwift
+7f5a4b515bd11b9ebd4e866d5753337874969ae6	not-for-merge	tag 'v1.1.1' of https://github.com/elevenlabs/ElevenLabsSwift
+167bef9560bf8fe2b857f7f5abda1e0cbf9e41c3	not-for-merge	tag 'v1.1.2' of https://github.com/elevenlabs/ElevenLabsSwift
+65f7bb4983c54d3f1e0b4b9536d1ee1851265b52	not-for-merge	tag 'v1.1.3' of https://github.com/elevenlabs/ElevenLabsSwift
+73588d629f33352dd74408b97e53d649643fb698	not-for-merge	tag 'v1.1.4' of https://github.com/elevenlabs/ElevenLabsSwift

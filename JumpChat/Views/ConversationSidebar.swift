@@ -101,6 +101,11 @@ struct ConversationSidebar: View {
     
     private var titleBar: some View {
         Button(action: {
+            let impact = UIImpactFeedbackGenerator(style: .rigid)
+            impact.impactOccurred()
+            
+            onNewChat()
+            
             withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
                 isPresented = false
             }

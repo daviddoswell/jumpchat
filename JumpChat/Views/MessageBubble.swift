@@ -25,7 +25,7 @@ struct MessageBubble: View {
                         .padding(.bottom, 4)
                         .textSelection(.enabled)
                     
-                    HStack(spacing: 28) {
+                    HStack(spacing: 16) {
                         Button(action: {
                             UIPasteboard.general.string = message.content
                             UINotificationFeedbackGenerator().notificationOccurred(.success)
