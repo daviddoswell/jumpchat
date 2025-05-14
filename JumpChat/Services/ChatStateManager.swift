@@ -16,8 +16,7 @@ class ChatStateManager: ObservableObject {
         self.currentConversation = Conversation()
         
         Task {
-            // Just load conversations, don't restore last active
-            await loadConversations()
+            await restoreState()
         }
     }
     

@@ -138,6 +138,7 @@ private struct ChatContentView: View {
                     ScrollView {
                         messagesList
                             .padding(.vertical, 8)
+                            .padding(.bottom, keyboardManager.keyboardRect.height)
                     }
                     .onAppear {
                         scrollToBottom(proxy: proxy)
