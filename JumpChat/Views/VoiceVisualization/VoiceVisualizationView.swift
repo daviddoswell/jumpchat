@@ -10,27 +10,6 @@ struct VoiceVisualizationView: View {
             Color.black.ignoresSafeArea()
             
             VStack {
-                // Top buttons
-                HStack {
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(.white)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: {}) {
-                        Image(systemName: "square.and.arrow.up")
-                            .foregroundStyle(.white)
-                    }
-                    
-                    Button(action: {}) {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundStyle(.white)
-                    }
-                }
-                .padding()
-                
                 Spacer()
                 
                 // Visualization
@@ -40,7 +19,7 @@ struct VoiceVisualizationView: View {
                             state: speechManager.state,
                             audioAmplitude: speechManager.audioAmplitude
                         )
-                        .frame(width: 250, height: 250)
+                        .frame(width: 300, height: 300)
                     } else {
                         AudioEqualizerView(
                             audioAmplitude: speechManager.audioAmplitude
@@ -67,6 +46,8 @@ struct VoiceVisualizationView: View {
                                     .foregroundStyle(.white)
                             }
                     }
+                  
+                  Spacer()
                     
                     Button(action: {
                         speechManager.endVoiceChat()
@@ -82,6 +63,7 @@ struct VoiceVisualizationView: View {
                             }
                     }
                 }
+                .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
         }

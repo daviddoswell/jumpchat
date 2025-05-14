@@ -166,7 +166,7 @@ private struct ChatContentView: View {
                     }
                 }
                 
-                VStack(spacing: 0) {
+                VStack(spacing: 16) {
                     if messages.isEmpty {
                         suggestionButtons
                     }
