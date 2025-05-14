@@ -16,7 +16,7 @@ struct ContentView: View {
                                 LazyVStack(spacing: 12) {
                                     ForEach(chatManager.currentConversation.messages) { message in
                                         MessageBubble(message: message)
-                                            .id(message.id)
+                                        .id(message.id)
                                     }
                                     if chatManager.state == .thinking {
                                         ThinkingBubble()

@@ -195,4 +195,101 @@ class ChatStateManager: ObservableObject {
             print("Failed to delete conversation: \(error)")
         }
     }
+    
+    func regenerateResponse(for message: Message) async {
+        print("Starting regeneration for message: \(message.id)")
+        
+        // Don't allow regeneration if we're already processing
+        guard case .idle = state else {
+            print("Can't regenerate - state is not idle: \(state)")
+            return
+        }
+        
+        // Find the message index
+        guard let index = currentConversation.messages.firstIndex(where: { $0.id == message.id }) else {
+            print("Message not found in conversation")
+            return
+        }
+        
+        // Find the corresponding user message (should be before this AI message)
+        guard index > 0, currentConversation.messages[index - 1].isUser else {
+            print("No user message found before this message")
+            return
+        }
+        
+        let userMessage = currentConversation.messages[index - 1]
+        print("Found user message to regenerate: \(userMessage.content)")
+        
+        // Remove the current AI response
+        currentConversation.messages.remove(at: index)
+        
+        await MainActor.run {
+            state = .thinking
+        }
+        
+        do {
+            // Create a placeholder for streaming UI
+            let responseId = UUID()
+            var completeResponse = ""
+            
+            await MainActor.run {
+                currentConversation.messages.append(Message(id: responseId, content: "", isUser: false, isStreaming: true))
+            }
+            
+            // Start streaming
+            await MainActor.run {
+                state = .streaming
+            }
+            
+            var isFirstToken = true
+            let feedbackGenerator = UIImpactFeedbackGenerator(style: .light)
+            feedbackGenerator.prepare()
+            
+            // Stream new response
+            for try await chunk in try await chatService.streamMessage(userMessage.content) {
+                await MainActor.run {
+                    if let streamIndex = currentConversation.messages.firstIndex(where: { $0.id == responseId }) {
+                        if isFirstToken {
+                            feedbackGenerator.impactOccurred()
+                            isFirstToken = false
+                        }
+                        completeResponse += chunk
+                        currentConversation.messages[streamIndex].content = completeResponse
+                    }
+                }
+            }
+            
+            // Replace streaming message with final complete message
+            await MainActor.run {
+                if let streamIndex = currentConversation.messages.firstIndex(where: { $0.id == responseId }) {
+                    currentConversation.messages[streamIndex] = Message(
+                        id: responseId,
+                        content: completeResponse,
+                        isUser: false,
+                        isStreaming: false
+                    )
+                }
+                
+                // Save after regeneration
+                do {
+                    try storageService.saveConversation(currentConversation)
+                    
+                    // Update conversations list
+                    if let listIndex = conversations.firstIndex(where: { $0.id == currentConversation.id }) {
+                        conversations[listIndex] = currentConversation
+                    }
+                } catch {
+                    print("Failed to save regenerated conversation: \(error)")
+                }
+                
+                state = .idle
+            }
+        } catch {
+            await MainActor.run {
+                state = .error(error.localizedDescription)
+                currentConversation.messages.append(Message(content: "Error: \(error.localizedDescription)", isUser: false))
+                state = .idle
+            }
+        }
+    }
 }

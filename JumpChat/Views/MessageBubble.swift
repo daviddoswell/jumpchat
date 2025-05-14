@@ -101,11 +101,29 @@ struct MessageBubble: View {
                         }
                         .foregroundColor(message.rating == .thumbsDown ? .blue : Color(.systemGray))
                         
-                        // Regenerate button (we'll implement this next)
-                        Button(action: {}) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 18))
+                        // Regenerate button
+                        Button(action: {
+                            print("Regenerate tapped for message: \(message.id)")
+                            Task {
+                                await chatManager.regenerateResponse(for: message)
+                            }
+                        }) {
+                            if chatManager.state == .thinking {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: Color(.systemGray)))
+                                    .frame(width: 18, height: 18)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 18))
+                            }
                         }
+                        .disabled(
+                            message.isUser || // Can't regenerate user messages
+                            message.isStreaming || // Can't regenerate while streaming
+                            chatManager.state == .thinking || // Can't regenerate while thinking
+                            chatManager.state == .streaming // Can't regenerate while streaming
+                        )
+                        .foregroundColor(Color(.systemGray))  // Match other buttons' color
                     }
                     .foregroundColor(Color(.systemGray))
                     .padding(.horizontal, 16)
