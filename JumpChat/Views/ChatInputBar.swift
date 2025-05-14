@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 import UIKit
 
@@ -9,6 +10,7 @@ struct ChatInputBar: View {
     @FocusState private var isInputFocused: Bool
     @StateObject private var permissionsManager = PermissionsManager()
     @State private var showVoiceChat = false
+    @State private var shouldShowMicPermissionAlert = false
     
     var body: some View {
         VStack(spacing: 16) {
@@ -43,8 +45,13 @@ struct ChatInputBar: View {
                     
                     Button {
                         Task {
-                            if await permissionsManager.requestMicrophoneAccess() {
+                            let hasPermission = await permissionsManager.requestMicrophoneAccess()
+                            if hasPermission {
                                 showVoiceChat = true
+                            } else {
+                                if AVAudioApplication.shared.recordPermission == .denied {
+                                    shouldShowMicPermissionAlert = true
+                                }
                             }
                         }
                     } label: {
@@ -69,6 +76,16 @@ struct ChatInputBar: View {
         .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
         .fullScreenCover(isPresented: $showVoiceChat) {
             VoiceVisualizationView()
+        }
+        .alert("Microphone Access Denied", isPresented: $shouldShowMicPermissionAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("JumpChat needs access to your microphone to enable voice input. Please enable microphone access in Settings.")
         }
         .onTapGesture {
             if !isInputFocused {
