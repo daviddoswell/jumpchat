@@ -6,6 +6,9 @@ struct ContentView: View {
     @State private var messageText = ""
     @State private var showingSidebar = false
     @State private var engine: CHHapticEngine?
+    @State private var showErrorAlert = false
+    @State private var alertMessage = ""
+
     @Environment(\.dismiss) private var dismiss
     @FocusState private var inputFocused: Bool
     
@@ -47,6 +50,17 @@ struct ContentView: View {
                                           to: nil,
                                           from: nil,
                                           for: nil)
+        }
+        .onChange(of: chatManager.state) { oldState, newState in
+            if case .error(let message) = newState {
+                self.alertMessage = message
+                self.showErrorAlert = true
+            }
+        }
+        .alert("Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(alertMessage)
         }
     }
     

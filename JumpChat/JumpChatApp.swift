@@ -9,6 +9,10 @@ import SwiftUI
 
 @main
 struct JumpChatApp: App {
+    init() {
+        NetworkUtils.initialize()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

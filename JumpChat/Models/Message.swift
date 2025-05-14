@@ -41,30 +41,21 @@ struct Message: Identifiable, Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        let idForLogging = try? container.decodeIfPresent(UUID.self, forKey: .id)?.uuidString ?? "UNKNOWN ID"
-        print("Message Decoder: Attempting to decode message with potential ID \(idForLogging)")
-
         id = try container.decode(UUID.self, forKey: .id)
         content = try container.decode(String.self, forKey: .content)
         isUser = try container.decode(Bool.self, forKey: .isUser)
 
         if container.contains(.timestamp) {
-            print("Message Decoder (ID: \(id.uuidString)): Timestamp key IS present.")
             do {
                 timestamp = try container.decode(Date.self, forKey: .timestamp)
-                print("Message Decoder (ID: \(id.uuidString)): Timestamp decoded successfully: \(timestamp)")
-            } catch let error {
-                print("Message Decoder (ID: \(id.uuidString)): Timestamp key was present, but failed to decode. Error: \(error.localizedDescription). Defaulting to current date.")
+            } catch {
                 timestamp = Date()
             }
         } else {
-            print("Message Decoder (ID: \(id.uuidString)): Timestamp key was NOT found. Defaulting to current date.")
             timestamp = Date()
         }
         
         isStreaming = try container.decodeIfPresent(Bool.self, forKey: .isStreaming) ?? false
         rating = try container.decodeIfPresent(MessageRating.self, forKey: .rating)
-        
-        print("Message Decoder: Successfully finished decoding message ID \(id.uuidString)")
     }
 }
