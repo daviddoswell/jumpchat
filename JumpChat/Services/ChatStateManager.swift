@@ -141,6 +141,30 @@ class ChatStateManager: ObservableObject {
         }
     }
     
+    func rateMessage(_ message: Message, rating: MessageRating) {
+        // Find message in current conversation
+        if let index = currentConversation.messages.firstIndex(where: { $0.id == message.id }) {
+            // Toggle rating if already set
+            if currentConversation.messages[index].rating == rating {
+                currentConversation.messages[index].rating = nil
+            } else {
+                currentConversation.messages[index].rating = rating
+            }
+            
+            // Save conversation with updated rating
+            do {
+                try storageService.saveConversation(currentConversation)
+                
+                // Update conversations list
+                if let listIndex = conversations.firstIndex(where: { $0.id == currentConversation.id }) {
+                    conversations[listIndex] = currentConversation
+                }
+            } catch {
+                print("Failed to save message rating: \(error)")
+            }
+        }
+    }
+    
     func loadConversation(_ conversation: Conversation) {
         self.currentConversation = conversation
         state = .idle

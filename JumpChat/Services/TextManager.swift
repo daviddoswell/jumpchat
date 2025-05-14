@@ -45,9 +45,6 @@ final class TextManager: ObservableObject {
     }
     
     func synthesizeAndPlay(_ text: String) async {
-        // First fetch available voices
-        await fetchVoices()
-        
         guard !isSynthesizing else { return }
         isSynthesizing = true
 
@@ -67,13 +64,13 @@ final class TextManager: ObservableObject {
 
             let parameters: [String: Any] = [
                 "text": text,
-                "model_id": "eleven_monolingual_v1", // Changed to faster model
+                "model_id": "eleven_monolingual_v1",
                 "voice_settings": [
-                    "stability": 0.45,         // Lowered for faster, more natural speech
-                    "similarity_boost": 0.75,   // Balanced for Archer's voice
-                    "style": 0.25,             // Reduced for more consistent pacing
+                    "stability": 0.45,
+                    "similarity_boost": 0.75,
+                    "style": 0.25,
                     "use_speaker_boost": true,
-                    "speaking_rate": 1.2       // Added: Slightly faster speech rate
+                    "speaking_rate": 1.2
                 ]
             ]
 

@@ -15,11 +15,8 @@ struct ContentView: View {
                             ScrollView {
                                 LazyVStack(spacing: 12) {
                                     ForEach(chatManager.currentConversation.messages) { message in
-                                        MessageBubble(
-                                            message: message.content,
-                                            isUser: message.isUser
-                                        )
-                                        .id(message.id) // Ensure each message has an ID for scrolling
+                                        MessageBubble(message: message)
+                                            .id(message.id)
                                     }
                                     if chatManager.state == .thinking {
                                         ThinkingBubble()
@@ -28,27 +25,23 @@ struct ContentView: View {
                                     }
                                 }
                                 .padding(.vertical, 8)
-                                // Add bottom padding that matches input height exactly
                                 .padding(.bottom, 80)
                             }
                             .onChange(of: chatManager.currentConversation.messages.count) { _, _ in
-                                // Scroll to last message with animation
                                 if let lastMessageId = chatManager.currentConversation.messages.last?.id {
                                     withAnimation {
                                         proxy.scrollTo(lastMessageId, anchor: .bottom)
                                     }
                                 }
                             }
-                            // Scroll to bottom on appear
                             .onAppear {
                                 if let lastMessageId = chatManager.currentConversation.messages.last?.id {
                                     proxy.scrollTo(lastMessageId, anchor: .bottom)
                                 }
                             }
                         }
-                        .clipShape(Rectangle()) // Prevent content from showing behind input
+                        .clipShape(Rectangle())
                         .safeAreaInset(edge: .bottom) {
-                            // This creates a reserved space that the scroll view won't scroll into
                             Color.clear.frame(height: chatManager.currentConversation.messages.isEmpty ? 250 : 180)
                         }
                         .contentShape(Rectangle())
@@ -59,9 +52,7 @@ struct ContentView: View {
                             }
                         }
                         
-                        // Input section
                         VStack(spacing: 8) {
-                            // Only show suggestions if there are no messages
                             if chatManager.currentConversation.messages.isEmpty {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 8) {
@@ -103,7 +94,6 @@ struct ContentView: View {
                     }
                 }
                 
-                // Sidebar overlay when visible
                 if showingSidebar {
                     Color.black.opacity(0.4)
                         .ignoresSafeArea()
@@ -115,7 +105,6 @@ struct ContentView: View {
                         .transition(.opacity)
                 }
                 
-                // Sliding sidebar
                 ConversationSidebar(
                     isPresented: $showingSidebar,
                     selectedConversation: Binding(
@@ -158,7 +147,6 @@ struct ContentView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            // Show keyboard immediately
             UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
                                          to: nil,
                                          from: nil,

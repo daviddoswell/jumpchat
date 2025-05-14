@@ -2,16 +2,16 @@ import SwiftUI
 import AVFoundation
 
 struct MessageBubble: View {
-    let message: String
-    let isUser: Bool
+    let message: Message
     @State private var showCopyAlert = false
     @StateObject private var textManager = ServiceContainer.shared.textManager
+    @ObservedObject private var chatManager = ServiceContainer.shared.stateManager
 
     var body: some View {
         HStack {
-            if isUser {
+            if message.isUser {
                 Spacer()
-                Text(ResponseParser.parse(message))
+                Text(ResponseParser.parse(message.content))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(Color(.systemGray6))
@@ -19,14 +19,14 @@ struct MessageBubble: View {
                     .padding(.horizontal, 16)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
-                    StreamingText(text: message, isStreaming: !isUser)
+                    StreamingText(text: message.content, isStreaming: message.isStreaming)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 4)
                         .textSelection(.enabled)
                     
                     HStack(spacing: 28) {
                         Button(action: {
-                            UIPasteboard.general.string = message
+                            UIPasteboard.general.string = message.content
                             UINotificationFeedbackGenerator().notificationOccurred(.success)
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                 showCopyAlert = true
@@ -42,13 +42,14 @@ struct MessageBubble: View {
                             Image(systemName: "doc.on.doc")
                                 .font(.system(size: 18))
                         }
+                        
                         // Text-to-speech button
                         Button(action: {
                             if textManager.isPlaying {
                                 textManager.stop()
                             } else {
                                 Task {
-                                    await textManager.synthesizeAndPlay(message)
+                                    await textManager.synthesizeAndPlay(message.content)
                                 }
                             }
                         }) {
@@ -62,14 +63,26 @@ struct MessageBubble: View {
                             }
                         }
                         .disabled(textManager.isSynthesizing)
-                        Button(action: {}) {
-                            Image(systemName: "hand.thumbsup")
+                        
+                        // Thumbs up button
+                        Button(action: {
+                            chatManager.rateMessage(message, rating: .thumbsUp)
+                        }) {
+                            Image(systemName: message.rating == .thumbsUp ? "hand.thumbsup.fill" : "hand.thumbsup")
                                 .font(.system(size: 18))
                         }
-                        Button(action: {}) {
-                            Image(systemName: "hand.thumbsdown")
+                        .foregroundColor(message.rating == .thumbsUp ? .blue : Color(.systemGray))
+                        
+                        // Thumbs down button
+                        Button(action: {
+                            chatManager.rateMessage(message, rating: .thumbsDown)
+                        }) {
+                            Image(systemName: message.rating == .thumbsDown ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                                 .font(.system(size: 18))
                         }
+                        .foregroundColor(message.rating == .thumbsDown ? .blue : Color(.systemGray))
+                        
+                        // Regenerate button (we'll implement this next)
                         Button(action: {}) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 18))
