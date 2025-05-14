@@ -1,6 +1,51 @@
-
+/// Configuration for JumpChat
+/// Copy this file to Config.swift and fill in your API keys
 struct Config {
-    static let apiKey = "YOUR_API_KEY_HERE"
-    static let baseURL = "YOUR_BASE_URL_HERE"
-    // Add other configuration variables as needed
+    // MARK: - OpenAI Configuration
+    
+    /// Your OpenAI API key
+    /// Get it from: https://platform.openai.com/api-keys
+    static let openAIKey = "YOUR_OPENAI_API_KEY"
+    
+    // MARK: - ElevenLabs Configuration
+    
+    /// Your ElevenLabs API key
+    /// Get it from: https://elevenlabs.io/docs/api-reference/authentication
+    static let elevenLabsApiKey = "YOUR_ELEVENLABS_API_KEY"
+    
+    /// Your ElevenLabs Voice ID
+    /// Get it from: https://elevenlabs.io/voice-library
+    /// Or use API: https://api.elevenlabs.io/v1/voices
+    static let elevenLabsVoiceId = "YOUR_VOICE_ID"
+    
+    /// Your ElevenLabs Agent ID (for session configuration)
+    /// This is typically your account or project identifier
+    /// Get it from your ElevenLabs dashboard
+    static let elevenLabsAgentId = "YOUR_AGENT_ID"
 }
+
+// MARK: - Quick Setup Instructions
+/*
+ To get started:
+ 
+ 1. OpenAI Setup:
+    - Go to https://platform.openai.com
+    - Sign up or log in
+    - Go to API keys section
+    - Create a new API key
+    
+ 2. ElevenLabs Setup:
+    - Go to https://elevenlabs.io
+    - Sign up or log in
+    - Go to your Profile Settings
+    - Find your API key
+    - Go to Voice Library to get your preferred voice ID
+    - Note your Agent ID from your account settings
+ 
+ 3. Create Config.swift:
+    - Copy this file and rename it to Config.swift
+    - Replace all placeholder values with your actual API keys
+    - Keep Config.swift in your .gitignore (already done)
+ 
+ Note: Never commit Config.swift with real API keys to version control!
+*/
