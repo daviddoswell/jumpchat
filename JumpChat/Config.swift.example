@@ -47,5 +47,7 @@ struct Config {
  3. Create Config.swift:
     - Copy this file and rename it to Config.swift
     - Replace all placeholder values with your actual API keys
-    - Keep Config.swift in your .gitignore (already done) 
+    - Keep Config.swift in your .gitignore (already done)
+    
+Repo: https://github.com/daviddoswell/jumpchat
 */
