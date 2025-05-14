@@ -1,5 +1,4 @@
 import SwiftUI
-import OpenAISwift
 
 struct ContentView: View {
     @ObservedObject private var chatManager = ServiceContainer.shared.stateManager
@@ -131,6 +130,9 @@ struct ContentView: View {
                     onNewChat: startNewChat,
                     onSelect: { conversation in
                         chatManager.loadConversation(conversation)
+                    },
+                    onDelete: { conversation in
+                        chatManager.deleteConversation(conversation)
                     }
                 )
                 .slideTransition(isPresented: showingSidebar)

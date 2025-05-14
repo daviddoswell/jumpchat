@@ -12,8 +12,10 @@ struct ConversationSidebar: View {
     let conversations: [Conversation]
     let onNewChat: () -> Void
     let onSelect: (Conversation) -> Void
+    let onDelete: (Conversation) -> Void
     
     @State private var searchText = ""
+    @State private var conversationToDelete: Conversation?
     
     private var groupedConversations: [ConversationGroup] {
         let filteredConversations = conversations.filter { conversation in
@@ -41,85 +43,99 @@ struct ConversationSidebar: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray.opacity(0.7))
-                TextField("Search", text: $searchText)
-                    .foregroundColor(.white)
-                    .accentColor(.gray)
-                    .font(.system(size: 17))
-                if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray.opacity(0.7))
-                    }
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(white: 0.12))
-            .cornerRadius(10)
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-            
-            // App title
-            Button(action: {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                    isPresented = false
-                }
-            }) {
-                HStack {
-                    Text("Jump Chat")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-            }
-            .buttonStyle(.plain)
-            
+            searchBar
+            titleBar
             Divider()
                 .background(Color(white: 0.2))
-            
-            // Conversations list
-            ScrollView {
-                LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
-                    ForEach(groupedConversations) { group in
-                        Section {
-                            ForEach(group.conversations) { conversation in
-                                Button(action: {
-                                    onSelect(conversation)
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                                        isPresented = false
-                                    }
-                                }) {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(conversation.title)
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.white)
-                                            .lineLimit(1)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 16)
-                                }
-                            }
-                        } header: {
-                            Text(group.title)
-                                .font(.system(size: 14, weight: .medium, design: .rounded))
-                                .foregroundColor(.white.opacity(0.8))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .padding(.top, 12)
-                        }
+            conversationList
+        }
+        .background(.black)
+        .confirmationDialog(
+            "",
+            isPresented: Binding(
+                get: { conversationToDelete != nil },
+                set: { if !$0 { conversationToDelete = nil } }
+            ),
+            actions: {
+                if let conversation = conversationToDelete {
+                    Button(role: .destructive) {
+                        onDelete(conversation)
+                        conversationToDelete = nil
+                    } label: {
+                        Text("Delete")
+                    }
+                    
+                    Button(role: .cancel) {
+                        conversationToDelete = nil
+                    } label: {
+                        Text("Cancel")
                     }
                 }
             }
-            .background(.black)
+        )
+    }
+    
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray.opacity(0.7))
+            TextField("Search", text: $searchText)
+                .foregroundColor(.white)
+                .accentColor(.gray)
+                .font(.system(size: 17))
+            if !searchText.isEmpty {
+                Button(action: { searchText = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray.opacity(0.7))
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(white: 0.12))
+        .cornerRadius(10)
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
+    }
+    
+    private var titleBar: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                isPresented = false
+            }
+        }) {
+            HStack {
+                Text("Jump Chat")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var conversationList: some View {
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                ForEach(groupedConversations) { group in
+                    ConversationGroupView(
+                        group: group,
+                        onSelect: { conversation in
+                            onSelect(conversation)
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                                isPresented = false
+                            }
+                        },
+                        onLongPress: { conversation in
+                            conversationToDelete = conversation
+                        },
+                        selectedToDelete: conversationToDelete
+                    )
+                }
+            }
         }
         .background(.black)
     }
